@@ -10,6 +10,6 @@ import org.dromara.common.mybatis.core.mapper.BaseMapperPlus;
  * @author Lion Li
  * @date 2026-06-02
  */
-public interface TGamesMapper extends BaseMapperPlus<Games, GamesVo> {
+public interface GamesMapper extends BaseMapperPlus<Games, GamesVo> {
 
 }

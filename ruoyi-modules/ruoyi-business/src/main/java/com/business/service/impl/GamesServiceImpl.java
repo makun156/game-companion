@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.business.domain.Games;
 import com.business.domain.bo.GamesBo;
 import com.business.domain.vo.GamesVo;
-import com.business.mapper.TGamesMapper;
+import com.business.mapper.GamesMapper;
 import com.business.service.IGamesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ import java.util.Map;
 @Service
 public class GamesServiceImpl implements IGamesService {
 
-    private final TGamesMapper baseMapper;
+    private final GamesMapper baseMapper;
 
     /**
      * 查询游戏列表
