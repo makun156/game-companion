@@ -357,6 +357,12 @@
                 <version>${revision}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.business</groupId>
+                <artifactId>ruoyi-business</artifactId>
+                <version>5.6.1</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

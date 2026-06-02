@@ -16,7 +16,10 @@
     </description>
 
     <dependencies>
-
+        <dependency>
+            <groupId>com.business</groupId>
+            <artifactId>ruoyi-business</artifactId>
+        </dependency>
         <!-- Mysql驱动包 -->
         <dependency>
             <groupId>com.mysql</groupId>
