@@ -1,7 +1,7 @@
 package com.business.service;
 
-import com.business.domain.bo.GamesBo;
-import com.business.domain.vo.GamesVo;
+import com.business.domain.bo.GameBo;
+import com.business.domain.vo.GameVo;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 
@@ -22,7 +22,7 @@ public interface IGamesService {
      * @param id 主键
      * @return 游戏列表
      */
-    GamesVo queryById(Long id);
+    GameVo queryById(Long id);
 
     /**
      * 分页查询游戏列表列表
@@ -31,7 +31,7 @@ public interface IGamesService {
      * @param pageQuery 分页参数
      * @return 游戏列表分页列表
      */
-    TableDataInfo<GamesVo> queryPageList(GamesBo bo, PageQuery pageQuery);
+    TableDataInfo<GameVo> queryPageList(GameBo bo, PageQuery pageQuery);
 
     /**
      * 查询符合条件的游戏列表列表
@@ -39,7 +39,7 @@ public interface IGamesService {
      * @param bo 查询条件
      * @return 游戏列表列表
      */
-    List<GamesVo> queryList(GamesBo bo);
+    List<GameVo> queryList(GameBo bo);
 
     /**
      * 新增游戏列表
@@ -47,7 +47,7 @@ public interface IGamesService {
      * @param bo 游戏列表
      * @return 是否新增成功
      */
-    Boolean insertByBo(GamesBo bo);
+    Boolean insertByBo(GameBo bo);
 
     /**
      * 修改游戏列表
@@ -55,7 +55,7 @@ public interface IGamesService {
      * @param bo 游戏列表
      * @return 是否修改成功
      */
-    Boolean updateByBo(GamesBo bo);
+    Boolean updateByBo(GameBo bo);
 
     /**
      * 校验并批量删除游戏列表信息

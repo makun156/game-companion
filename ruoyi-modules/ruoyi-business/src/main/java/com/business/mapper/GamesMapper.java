@@ -1,7 +1,7 @@
 package com.business.mapper;
 
-import com.business.domain.Games;
-import com.business.domain.vo.GamesVo;
+import com.business.domain.Game;
+import com.business.domain.vo.GameVo;
 import org.dromara.common.mybatis.core.mapper.BaseMapperPlus;
 
 /**
@@ -10,6 +10,6 @@ import org.dromara.common.mybatis.core.mapper.BaseMapperPlus;
  * @author Lion Li
  * @date 2026-06-02
  */
-public interface GamesMapper extends BaseMapperPlus<Games, GamesVo> {
+public interface GamesMapper extends BaseMapperPlus<Game, GameVo> {
 
 }

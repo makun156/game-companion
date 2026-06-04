@@ -2,7 +2,7 @@ package com.business.domain.vo;
 
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
-import com.business.domain.Games;
+import com.business.domain.Game;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import org.dromara.common.excel.annotation.ExcelDictFormat;
@@ -16,15 +16,15 @@ import java.io.Serializable;
 
 
 /**
- * 游戏列表视图对象 t_games
+ * 游戏列表视图对象 t_game
  *
  * @author Lion Li
  * @date 2026-06-02
  */
 @Data
 @ExcelIgnoreUnannotated
-@AutoMapper(target = Games.class)
-public class GamesVo implements Serializable {
+@AutoMapper(target = Game.class)
+public class GameVo implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -1,28 +1,31 @@
-package com.business.domain.bo;
+package com.business.domain;
 
-import com.business.domain.Games;
-import io.github.linpeilie.annotations.AutoMapper;
-import jakarta.validation.constraints.NotNull;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.dromara.common.core.validate.EditGroup;
 import org.dromara.common.mybatis.core.domain.BaseEntity;
 
+import java.io.Serial;
+
 /**
- * 游戏列表业务对象 t_games
+ * 游戏列表对象 t_game
  *
  * @author Lion Li
  * @date 2026-06-02
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AutoMapper(target = Games.class, reverseConvertGenerate = false)
-public class GamesBo extends BaseEntity {
+@TableName("t_game")
+public class Game extends BaseEntity {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     /**
      *
      */
-    @NotNull(message = "不能为空", groups = { EditGroup.class })
+    @TableId(value = "id")
     private Long id;
 
     /**
@@ -41,9 +44,9 @@ public class GamesBo extends BaseEntity {
     private String description;
 
     /**
-     * 游戏分类(参见字典sys_category)
+     * 游戏分类id
      */
-    private String category;
+    private Long categoryId;
 
     /**
      * 排序

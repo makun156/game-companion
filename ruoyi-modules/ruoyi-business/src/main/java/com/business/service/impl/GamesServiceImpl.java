@@ -3,9 +3,9 @@ package com.business.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.business.domain.Games;
-import com.business.domain.bo.GamesBo;
-import com.business.domain.vo.GamesVo;
+import com.business.domain.Game;
+import com.business.domain.bo.GameBo;
+import com.business.domain.vo.GameVo;
 import com.business.mapper.GamesMapper;
 import com.business.service.IGamesService;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class GamesServiceImpl implements IGamesService {
      * @return 游戏列表
      */
     @Override
-    public GamesVo queryById(Long id){
+    public GameVo queryById(Long id){
         return baseMapper.selectVoById(id);
     }
 
@@ -52,9 +52,9 @@ public class GamesServiceImpl implements IGamesService {
      * @return 游戏列表分页列表
      */
     @Override
-    public TableDataInfo<GamesVo> queryPageList(GamesBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<Games> lqw = buildQueryWrapper(bo);
-        Page<GamesVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+    public TableDataInfo<GameVo> queryPageList(GameBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Game> lqw = buildQueryWrapper(bo);
+        Page<GameVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
 
@@ -65,18 +65,18 @@ public class GamesServiceImpl implements IGamesService {
      * @return 游戏列表列表
      */
     @Override
-    public List<GamesVo> queryList(GamesBo bo) {
-        LambdaQueryWrapper<Games> lqw = buildQueryWrapper(bo);
+    public List<GameVo> queryList(GameBo bo) {
+        LambdaQueryWrapper<Game> lqw = buildQueryWrapper(bo);
         return baseMapper.selectVoList(lqw);
     }
 
-    private LambdaQueryWrapper<Games> buildQueryWrapper(GamesBo bo) {
+    private LambdaQueryWrapper<Game> buildQueryWrapper(GameBo bo) {
         Map<String, Object> params = bo.getParams();
-        LambdaQueryWrapper<Games> lqw = Wrappers.lambdaQuery();
-        lqw.orderByAsc(Games::getId);
-        lqw.like(StringUtils.isNotBlank(bo.getName()), Games::getName, bo.getName());
-        lqw.eq(StringUtils.isNotBlank(bo.getCategory()), Games::getCategory, bo.getCategory());
-        lqw.eq(bo.getStatus() != null, Games::getStatus, bo.getStatus());
+        LambdaQueryWrapper<Game> lqw = Wrappers.lambdaQuery();
+        lqw.orderByAsc(Game::getId);
+        lqw.like(StringUtils.isNotBlank(bo.getName()), Game::getName, bo.getName());
+        lqw.eq(bo.getCategoryId()!=null, Game::getCategoryId, bo.getCategoryId());
+        lqw.eq(bo.getStatus() != null, Game::getStatus, bo.getStatus());
         return lqw;
     }
 
@@ -87,9 +87,8 @@ public class GamesServiceImpl implements IGamesService {
      * @return 是否新增成功
      */
     @Override
-    public Boolean insertByBo(GamesBo bo) {
-        Games add = MapstructUtils.convert(bo, Games.class);
-        validEntityBeforeSave(add);
+    public Boolean insertByBo(GameBo bo) {
+        Game add = MapstructUtils.convert(bo, Game.class);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setId(add.getId());
@@ -104,18 +103,11 @@ public class GamesServiceImpl implements IGamesService {
      * @return 是否修改成功
      */
     @Override
-    public Boolean updateByBo(GamesBo bo) {
-        Games update = MapstructUtils.convert(bo, Games.class);
-        validEntityBeforeSave(update);
+    public Boolean updateByBo(GameBo bo) {
+        Game update = MapstructUtils.convert(bo, Game.class);
         return baseMapper.updateById(update) > 0;
     }
 
-    /**
-     * 保存前的数据校验
-     */
-    private void validEntityBeforeSave(Games entity){
-        //TODO 做一些数据校验,如唯一约束
-    }
 
     /**
      * 校验并批量删除游戏列表信息

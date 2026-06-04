@@ -1,8 +1,8 @@
 package com.business.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
-import com.business.domain.bo.GamesBo;
-import com.business.domain.vo.GamesVo;
+import com.business.domain.bo.GameBo;
+import com.business.domain.vo.GameVo;
 import com.business.service.IGamesService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotEmpty;
@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/games")
-public class GamesController extends BaseController {
+public class GameController extends BaseController {
 
     private final IGamesService tGamesService;
 
@@ -42,7 +42,7 @@ public class GamesController extends BaseController {
      */
     @SaCheckPermission("games:info:list")
     @GetMapping("/list")
-    public TableDataInfo<GamesVo> list(GamesBo bo, PageQuery pageQuery) {
+    public TableDataInfo<GameVo> list(GameBo bo, PageQuery pageQuery) {
         return tGamesService.queryPageList(bo, pageQuery);
     }
 
@@ -52,9 +52,9 @@ public class GamesController extends BaseController {
     @SaCheckPermission("games:info:export")
     @Log(title = "游戏列表", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(GamesBo bo, HttpServletResponse response) {
-        List<GamesVo> list = tGamesService.queryList(bo);
-        ExcelUtil.exportExcel(list, "游戏列表", GamesVo.class, response);
+    public void export(GameBo bo, HttpServletResponse response) {
+        List<GameVo> list = tGamesService.queryList(bo);
+        ExcelUtil.exportExcel(list, "游戏列表", GameVo.class, response);
     }
 
     /**
@@ -64,7 +64,7 @@ public class GamesController extends BaseController {
      */
     @SaCheckPermission("games:info:query")
     @GetMapping("/{id}")
-    public R<GamesVo> getInfo(@NotNull(message = "主键不能为空")
+    public R<GameVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {
         return R.ok(tGamesService.queryById(id));
     }
@@ -76,7 +76,7 @@ public class GamesController extends BaseController {
     @Log(title = "游戏列表", businessType = BusinessType.INSERT)
     @RepeatSubmit()
     @PostMapping()
-    public R<Void> add(@Validated(AddGroup.class) @RequestBody GamesBo bo) {
+    public R<Void> add(@Validated(AddGroup.class) @RequestBody GameBo bo) {
         return toAjax(tGamesService.insertByBo(bo));
     }
 
@@ -87,7 +87,7 @@ public class GamesController extends BaseController {
     @Log(title = "游戏列表", businessType = BusinessType.UPDATE)
     @RepeatSubmit()
     @PutMapping()
-    public R<Void> edit(@Validated(EditGroup.class) @RequestBody GamesBo bo) {
+    public R<Void> edit(@Validated(EditGroup.class) @RequestBody GameBo bo) {
         return toAjax(tGamesService.updateByBo(bo));
     }
 
