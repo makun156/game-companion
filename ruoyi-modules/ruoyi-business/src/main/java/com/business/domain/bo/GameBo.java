@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import org.dromara.common.core.validate.EditGroup;
 import org.dromara.common.mybatis.core.domain.BaseEntity;
 
+import java.util.List;
+
 /**
  * 游戏列表业务对象 t_game
  *
@@ -55,5 +57,9 @@ public class GameBo extends BaseEntity {
      */
     private Long status;
 
+    /**
+     * 游戏段位
+     */
+    private List<GameLevelBo> gameLevels;
 
 }

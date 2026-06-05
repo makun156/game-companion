@@ -1,7 +1,7 @@
 package com.business.service;
 
-import com.business.domain.vo.CityVo;
 import com.business.domain.bo.CityBo;
+import com.business.domain.vo.CityVo;
 
 import java.util.Collection;
 import java.util.List;

@@ -3,6 +3,7 @@ package com.business.domain.vo;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import com.business.domain.Game;
+import com.business.domain.bo.GameLevelBo;
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 import org.dromara.common.excel.annotation.ExcelDictFormat;
@@ -12,7 +13,7 @@ import org.dromara.common.translation.constant.TransConstant;
 
 import java.io.Serial;
 import java.io.Serializable;
-
+import java.util.List;
 
 
 /**
@@ -59,11 +60,9 @@ public class GameVo implements Serializable {
     private String description;
 
     /**
-     * 游戏分类(参见字典sys_category)
+     * 游戏分类
      */
-    @ExcelProperty(value = "游戏分类(参见字典sys_category)", converter = ExcelDictConvert.class)
-    @ExcelDictFormat(dictType = "sys_category")
-    private String category;
+    private Long categoryId;
 
     /**
      * 排序
@@ -77,6 +76,9 @@ public class GameVo implements Serializable {
     @ExcelProperty(value = "状态(0-启用[默认] 1-禁用)", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_use_status")
     private Long status;
-
+    /**
+     * 游戏段位
+     */
+    private List<GameLevelVo> gameLevels;
 
 }

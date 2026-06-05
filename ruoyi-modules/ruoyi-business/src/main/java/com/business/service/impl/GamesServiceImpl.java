@@ -1,21 +1,30 @@
 package com.business.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.business.domain.Game;
+import com.business.domain.GameLevel;
 import com.business.domain.bo.GameBo;
+import com.business.domain.bo.GameLevelBo;
+import com.business.domain.vo.GameLevelVo;
 import com.business.domain.vo.GameVo;
+import com.business.mapper.GameLevelMapper;
 import com.business.mapper.GamesMapper;
 import com.business.service.IGamesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
 import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +41,7 @@ import java.util.Map;
 public class GamesServiceImpl implements IGamesService {
 
     private final GamesMapper baseMapper;
+    private final GameLevelMapper gameLevelMapper;
 
     /**
      * 查询游戏列表
@@ -40,8 +50,13 @@ public class GamesServiceImpl implements IGamesService {
      * @return 游戏列表
      */
     @Override
-    public GameVo queryById(Long id){
-        return baseMapper.selectVoById(id);
+    public GameVo queryById(Long id) {
+        GameVo queryGameInfo = baseMapper.selectVoById(id);
+        LambdaQueryWrapper<GameLevel> gameLevelWrapper = Wrappers.lambdaQuery(GameLevel.class);
+        gameLevelWrapper.eq(GameLevel::getGameId, id);
+        List<GameLevel> gameLevelList = gameLevelMapper.selectList(gameLevelWrapper);
+        queryGameInfo.setGameLevels(MapstructUtils.convert(gameLevelList, GameLevelVo.class));
+        return queryGameInfo;
     }
 
     /**
@@ -75,7 +90,7 @@ public class GamesServiceImpl implements IGamesService {
         LambdaQueryWrapper<Game> lqw = Wrappers.lambdaQuery();
         lqw.orderByAsc(Game::getId);
         lqw.like(StringUtils.isNotBlank(bo.getName()), Game::getName, bo.getName());
-        lqw.eq(bo.getCategoryId()!=null, Game::getCategoryId, bo.getCategoryId());
+        lqw.eq(bo.getCategoryId() != null, Game::getCategoryId, bo.getCategoryId());
         lqw.eq(bo.getStatus() != null, Game::getStatus, bo.getStatus());
         return lqw;
     }
@@ -87,13 +102,21 @@ public class GamesServiceImpl implements IGamesService {
      * @return 是否新增成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean insertByBo(GameBo bo) {
         Game add = MapstructUtils.convert(bo, Game.class);
-        boolean flag = baseMapper.insert(add) > 0;
-        if (flag) {
-            bo.setId(add.getId());
+        int insertResult = baseMapper.insert(add);
+        if (insertResult != 1) {
+            throw new ServiceException("新增失败");
         }
-        return flag;
+        List<GameLevelBo> gameLevels = bo.getGameLevels();
+        if (gameLevels.isEmpty()) return true;
+        for (GameLevelBo gameLevel : gameLevels) {
+            GameLevel buildGameLevel = BeanUtil.toBean(gameLevel, GameLevel.class);
+            buildGameLevel.setGameId(add.getId());
+            gameLevelMapper.insert(buildGameLevel);
+        }
+        return true;
     }
 
     /**
@@ -103,9 +126,26 @@ public class GamesServiceImpl implements IGamesService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional
     public Boolean updateByBo(GameBo bo) {
         Game update = MapstructUtils.convert(bo, Game.class);
-        return baseMapper.updateById(update) > 0;
+        int updateRes = baseMapper.updateById(update);
+        if (updateRes != 1) {
+            throw new ServiceException("修改失败");
+        }
+        LambdaQueryWrapper<GameLevel> gameLevelWrapper = Wrappers.lambdaQuery(GameLevel.class);
+        gameLevelWrapper.eq(GameLevel::getGameId, update.getId());
+        gameLevelMapper.delete(gameLevelWrapper);
+        List<GameLevelBo> gameLevels = bo.getGameLevels();
+        if (gameLevels.isEmpty()) return true;
+        ArrayList<GameLevel> batchInsertGameLevelList = new ArrayList<>();
+        for (GameLevelBo gameLevel : gameLevels) {
+            GameLevel convertGameLevelBean = BeanUtil.toBean(gameLevel, GameLevel.class);
+            convertGameLevelBean.setGameId(update.getId());
+            batchInsertGameLevelList.add(convertGameLevelBean);
+        }
+        gameLevelMapper.insertBatch(batchInsertGameLevelList);
+        return true;
     }
 
 
@@ -117,10 +157,12 @@ public class GamesServiceImpl implements IGamesService {
      * @return 是否删除成功
      */
     @Override
+    @Transactional
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
-        }
-        return baseMapper.deleteByIds(ids) > 0;
+        baseMapper.deleteByIds(ids);
+        LambdaQueryWrapper<GameLevel> gameLevelWrapper = Wrappers.lambdaQuery(GameLevel.class);
+        gameLevelWrapper.in(GameLevel::getGameId, ids);
+        gameLevelMapper.delete(gameLevelWrapper);
+        return true;
     }
 }

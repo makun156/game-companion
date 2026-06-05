@@ -62,7 +62,7 @@ public class GameController extends BaseController {
      *
      * @param id 主键
      */
-    @SaCheckPermission("games:info:query")
+    @SaCheckPermission("games:info:list")
     @GetMapping("/{id}")
     public R<GameVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {
@@ -96,7 +96,7 @@ public class GameController extends BaseController {
      *
      * @param ids 主键串
      */
-    @SaCheckPermission("games:info:remove")
+    @SaCheckPermission("games:info:delete")
     @Log(title = "游戏列表", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空")

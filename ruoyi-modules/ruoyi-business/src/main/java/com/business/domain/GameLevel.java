@@ -9,15 +9,15 @@ import org.dromara.common.mybatis.core.domain.BaseEntity;
 import java.io.Serial;
 
 /**
- * 区域对象 t_city
+ * 游戏段位对象 t_game_level
  *
  * @author Mk
- * @date 2026-06-03
+ * @date 2026-06-05
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("t_city")
-public class City extends BaseEntity {
+@TableName("t_game_level")
+public class GameLevel extends BaseEntity {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -29,29 +29,14 @@ public class City extends BaseEntity {
     private Long id;
 
     /**
-     * 区域名称
+     * 游戏id
      */
-    private String name;
+    private Long gameId;
 
     /**
-     * 祖籍列表
+     * 游戏段位
      */
-    private String ancestors;
-
-    /**
-     * 父id
-     */
-    private Long parentId;
-
-    /**
-     * 层级
-     */
-    private Long level;
-
-    /**
-     * 城市全称
-     */
-    private String fullName;
+    private String level;
 
     /**
      * 排序
@@ -62,6 +47,5 @@ public class City extends BaseEntity {
      * 状态
      */
     private Integer status;
-
 
 }
