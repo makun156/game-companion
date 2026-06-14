@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 import org.dromara.common.mybatis.core.domain.BaseEntity;
 
 @Data
-@Builder
 @EqualsAndHashCode(callSuper = true)
 @TableName("t_game_companion_user_photo")
 public class GameCompanionUserPhoto extends BaseEntity {

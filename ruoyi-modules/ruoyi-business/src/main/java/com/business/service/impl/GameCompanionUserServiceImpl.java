@@ -113,10 +113,9 @@ public class GameCompanionUserServiceImpl implements IGameCompanionUserService {
         baseMapper.insert(add);
         ArrayList<GameCompanionUserPhoto> batchInsertPhoto = new ArrayList<>();
         bo.getPhotos().forEach(p -> {
-            GameCompanionUserPhoto buildUserPhoto = GameCompanionUserPhoto.builder()
-                .companionId(add.getId())
-                .photo(p.getPhoto())
-                .build();
+            GameCompanionUserPhoto buildUserPhoto = new GameCompanionUserPhoto();
+            buildUserPhoto.setCompanionId(add.getId());
+            buildUserPhoto.setPhoto(p.getPhoto());
             batchInsertPhoto.add(buildUserPhoto);
         });
         companionUserPhotoMapper.insertBatch(batchInsertPhoto);
