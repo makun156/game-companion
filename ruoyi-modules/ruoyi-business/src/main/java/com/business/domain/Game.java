@@ -1,6 +1,7 @@
 package com.business.domain;
 
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -56,6 +57,7 @@ public class Game extends BaseEntity {
     /**
      * 状态(0-启用[默认] 1-禁用)
      */
+    @TableLogic
     private Long status;
 
 
