@@ -46,9 +46,4 @@ public class LoginVo {
      */
     private String scope;
 
-    /**
-     * 用户 openid
-     */
-    private String openid;
-
 }

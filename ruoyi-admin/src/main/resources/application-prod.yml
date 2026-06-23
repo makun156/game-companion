@@ -188,6 +188,12 @@ sms:
       signature: 您的短信签名
       sdk-app-id: 您的sdkAppId
 
+--- # 微信小程序配置
+wechat:
+  miniapp:
+    configs:
+      wx8ad0e520bfbd2840: 17db4d58c14ecf25fa6408ac84bf3f15
+
 --- # 三方授权
 justauth:
   # 前端外网访问地址

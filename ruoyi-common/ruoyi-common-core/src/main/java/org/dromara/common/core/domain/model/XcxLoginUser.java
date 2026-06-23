@@ -19,9 +19,4 @@ public class XcxLoginUser extends LoginUser {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * openid
-     */
-    private String openid;
-
 }

@@ -33,6 +33,11 @@ public class GameCompanionUser extends BaseEntity {
     private String name;
 
     /**
+     * 昵称
+     */
+    private String nickName;
+
+    /**
      * 性别(0男 1女)
      */
     private String gender;
