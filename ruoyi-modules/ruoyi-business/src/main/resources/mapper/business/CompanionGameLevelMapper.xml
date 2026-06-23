@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.business.mapper.CompanionGameLevelMapper">
+
+    <resultMap id="CompanionGameLevelVoResult" type="com.business.domain.vo.CompanionGameLevelVo">
+        <id     property="id"            column="id"/>
+        <result property="userId"        column="user_id"/>
+        <result property="gameId"        column="game_id"/>
+        <result property="gameLevelId"   column="game_level_id"/>
+        <result property="gameName"      column="game_name"/>
+        <result property="gameLevelName" column="game_level_name"/>
+    </resultMap>
+
+    <select id="selectVoListByUserId" resultMap="CompanionGameLevelVoResult">
+        SELECT cgl.id,
+               cgl.user_id,
+               cgl.game_id,
+               cgl.game_level_id,
+               g.name  AS game_name,
+               gl.level AS game_level_name
+        FROM t_companion_game_level cgl
+        LEFT JOIN t_game g ON cgl.game_id = g.id
+        LEFT JOIN t_game_level gl ON cgl.game_level_id = gl.id
+        WHERE cgl.user_id = #{userId}
+    </select>
+
+</mapper>

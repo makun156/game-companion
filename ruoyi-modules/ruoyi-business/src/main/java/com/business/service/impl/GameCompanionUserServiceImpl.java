@@ -1,7 +1,9 @@
 package com.business.service.impl;
 
 import com.business.domain.GameCompanionUserPhoto;
+import com.business.domain.vo.CompanionGameLevelVo;
 import com.business.domain.vo.GameCompanionUserPhotoVo;
+import com.business.mapper.CompanionGameLevelMapper;
 import com.business.mapper.GameCompanionUserPhotoMapper;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
@@ -39,6 +41,7 @@ public class GameCompanionUserServiceImpl implements IGameCompanionUserService {
 
     private final GameCompanionUserMapper baseMapper;
     private final GameCompanionUserPhotoMapper companionUserPhotoMapper;
+    private final CompanionGameLevelMapper companionGameLevelMapper;
 
     /**
      * 查询陪玩表
@@ -49,9 +52,13 @@ public class GameCompanionUserServiceImpl implements IGameCompanionUserService {
     @Override
     public GameCompanionUserVo queryById(Long id) {
         GameCompanionUserVo queryGameCompanionUserInfo = baseMapper.selectVoById(id);
+        //查询照片
         LambdaQueryWrapper<GameCompanionUserPhoto> photoWrapper = Wrappers.lambdaQuery(GameCompanionUserPhoto.class);
         photoWrapper.eq(GameCompanionUserPhoto::getCompanionId, id);
         queryGameCompanionUserInfo.setPhotos(companionUserPhotoMapper.selectVoList(photoWrapper));
+        //查询游戏等级
+        List<CompanionGameLevelVo> companionGameLevelList = companionGameLevelMapper.selectVoListByUserId(id);
+        queryGameCompanionUserInfo.setGameLevels(companionGameLevelList);
         return queryGameCompanionUserInfo;
     }
 

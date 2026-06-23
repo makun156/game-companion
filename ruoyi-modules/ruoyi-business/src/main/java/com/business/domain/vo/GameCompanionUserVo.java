@@ -33,7 +33,6 @@ public class GameCompanionUserVo implements Serializable {
     /**
      *
      */
-    @ExcelProperty(value = "")
     private Long id;
 
     /**
@@ -113,6 +112,12 @@ public class GameCompanionUserVo implements Serializable {
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "business_use_status")
     private String status;
-
+    /**
+     * 陪玩照片
+     */
     private List<GameCompanionUserPhotoVo> photos;
+    /**
+     * 陪玩游戏段位
+     */
+    private List<CompanionGameLevelVo> gameLevels;
 }
