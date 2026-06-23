@@ -38,7 +38,6 @@ public class CityController extends BaseController {
     /**
      * 查询区域列表
      */
-    @SaCheckPermission("city:info:list")
     @GetMapping("/list")
     public R<List<CityVo>> list(CityBo bo) {
         List<CityVo> list = cityService.queryList(bo);
@@ -61,7 +60,6 @@ public class CityController extends BaseController {
      *
      * @param id 主键
      */
-    @SaCheckPermission("city:info:query")
     @GetMapping("/{id}")
     public R<CityVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {

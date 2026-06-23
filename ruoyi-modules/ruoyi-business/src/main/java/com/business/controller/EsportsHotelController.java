@@ -39,7 +39,6 @@ public class EsportsHotelController extends BaseController {
     /**
      * 查询商家表列表
      */
-    @SaCheckPermission("user:hotel:list")
     @GetMapping("/list")
     public TableDataInfo<EsportsHotelVo> list(EsportsHotelBo bo, PageQuery pageQuery) {
         return esportsHotelService.queryPageList(bo, pageQuery);
@@ -61,7 +60,6 @@ public class EsportsHotelController extends BaseController {
      *
      * @param id 主键
      */
-    @SaCheckPermission("user:hotel:query")
     @GetMapping("/{id}")
     public R<EsportsHotelVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {

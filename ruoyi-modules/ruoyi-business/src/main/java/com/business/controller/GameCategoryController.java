@@ -40,7 +40,6 @@ public class GameCategoryController extends BaseController {
     /**
      * 查询游戏类别列表
      */
-    @SaCheckPermission("gameCategory:info:list")
     @GetMapping("/list")
     public TableDataInfo<GameCategoryVo> list(GameCategoryBo bo, PageQuery pageQuery) {
         return gameCategoryService.queryPageList(bo, pageQuery);
@@ -62,7 +61,6 @@ public class GameCategoryController extends BaseController {
      *
      * @param id 主键
      */
-    @SaCheckPermission("gameCategory:info:query")
     @GetMapping("/{id}")
     public R<GameCategoryVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {

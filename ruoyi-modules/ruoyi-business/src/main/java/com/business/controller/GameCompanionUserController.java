@@ -39,7 +39,6 @@ public class GameCompanionUserController extends BaseController {
     /**
      * 查询陪玩表列表
      */
-    @SaCheckPermission("user:companion:list")
     @GetMapping("/list")
     public TableDataInfo<GameCompanionUserVo> list(GameCompanionUserBo bo, PageQuery pageQuery) {
         return gameCompanionUserService.queryPageList(bo, pageQuery);
@@ -61,7 +60,6 @@ public class GameCompanionUserController extends BaseController {
      *
      * @param id 主键
      */
-    @SaCheckPermission("user:companion:query")
     @GetMapping("/{id}")
     public R<GameCompanionUserVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {

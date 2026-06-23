@@ -35,7 +35,6 @@ public class CompanionGameLevelController extends BaseController {
      * @param userId 陪玩用户id
      */
     @GetMapping("/list/{userId}")
-    @SaCheckPermission("companion:gameLevel:list")
     public R<List<CompanionGameLevelVo>> list(
         @NotNull(message = "陪玩用户id不能为空") @PathVariable Long userId) {
         return R.ok(companionGameLevelService.queryListByUserId(userId));
