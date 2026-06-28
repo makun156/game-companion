@@ -46,4 +46,9 @@ public class LoginVo {
      */
     private String scope;
 
+    /**
+     * 登录方式 1:陪玩 2:用户
+     */
+    private String loginUserType;
+
 }

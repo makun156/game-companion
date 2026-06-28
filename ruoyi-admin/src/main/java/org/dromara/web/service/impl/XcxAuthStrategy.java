@@ -23,7 +23,6 @@ import org.dromara.common.core.domain.model.XcxLoginBody;
 import org.dromara.common.core.domain.model.XcxLoginUser;
 import org.dromara.common.core.enums.UserType;
 import org.dromara.common.core.exception.ServiceException;
-import org.dromara.common.core.exception.user.UserException;
 import org.dromara.common.core.utils.MessageUtils;
 import org.dromara.common.core.utils.ValidatorUtils;
 import org.dromara.common.json.utils.JsonUtils;
@@ -73,7 +72,7 @@ public class XcxAuthStrategy implements IAuthStrategy {
             .form("grant_type", "client_credential")
             .execute();
         if (!getTokenResponse.isOk()) {
-            throw new ServiceException("获取小程序 access_token 失败: " + getTokenResponse.body());
+            throw new ServiceException("获取小程序 access_token 失败,请联系管理员");
         }
         String accessTokenStr = getTokenResponse.body();
         Map<String, Object> accessTokenMap = JSONUtil.toBean(accessTokenStr, Map.class);
@@ -84,7 +83,7 @@ public class XcxAuthStrategy implements IAuthStrategy {
             .body(JSONUtil.toJsonStr(Map.of("code", xcxCode)))
             .execute();
         if (!getWxLoginInfo.isOk()) {
-            throw new ServiceException("获取小程序用户信息失败: " + getWxLoginInfo.body());
+            throw new ServiceException("获取小程序用户信息失败，请重试");
         }
         String wxLoginInfoStr = getWxLoginInfo.body();
         Map<String, Object> wxLoginInfoMap = JSONUtil.toBean(wxLoginInfoStr, Map.class);
@@ -104,8 +103,6 @@ public class XcxAuthStrategy implements IAuthStrategy {
         if (StrUtil.isBlank(phoneNumber)) {
             throw new ServiceException("微信返回的手机号为空");
         }
-        log.info("小程序手机号快速组件获取成功, phoneNumber: {}", phoneNumber);
-
         // 通过手机号查找或创建用户
         Object obj = loadUserByPhoneNumber(phoneNumber);
 
@@ -115,13 +112,14 @@ public class XcxAuthStrategy implements IAuthStrategy {
             loginUser.setUserId(companionUser.getId());
             loginUser.setUsername(companionUser.getName());
             loginUser.setNickname(companionUser.getNickName());
+            loginUser.setUserType(UserType.COMPANION_USER.getUserType());
         } else {
             UserVo user = (UserVo) obj;
             loginUser.setUserId(user.getId());
             loginUser.setUsername(user.getUserName());
             loginUser.setNickname(user.getNickName());
+            loginUser.setUserType(UserType.XCX_USER.getUserType());
         }
-        loginUser.setUserType(UserType.XCX_USER.getUserType());
         loginUser.setClientKey(client.getClientKey());
         loginUser.setDeviceType(client.getDeviceType());
 
@@ -142,6 +140,7 @@ public class XcxAuthStrategy implements IAuthStrategy {
         loginVo.setAccessToken(StpUtil.getTokenValue());
         loginVo.setExpireIn(StpUtil.getTokenTimeout());
         loginVo.setClientId(client.getClientId());
+        loginVo.setLoginUserType(obj instanceof GameCompanionUser ? UserType.COMPANION_USER.getUserType() : UserType.XCX_USER.getUserType());
         return loginVo;
     }
 
@@ -177,9 +176,6 @@ public class XcxAuthStrategy implements IAuthStrategy {
         if (!success) {
             throw new ServiceException("小程序用户注册失败");
         }
-
-        log.info("小程序新用户注册成功, userId: {}, phoneNumber: {}", userBo.getId(), phoneNumber);
-
         return userService.selectUserById(userBo.getId());
     }
 

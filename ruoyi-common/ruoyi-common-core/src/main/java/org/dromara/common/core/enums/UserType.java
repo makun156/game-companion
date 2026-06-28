@@ -26,7 +26,13 @@ public enum UserType {
     /**
      * 小程序用户
      */
-    XCX_USER("xcx_user");
+    XCX_USER("xcx_user"),
+
+    /**
+     * 1 陪玩用户
+     */
+    COMPANION_USER("companion_user");
+
 
     /**
      * 用户类型标识（用于 token、权限识别等）
