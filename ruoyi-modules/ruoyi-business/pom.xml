@@ -13,6 +13,10 @@
     <artifactId>ruoyi-business</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.wechatpay-apiv3</groupId>
+            <artifactId>wechatpay-java</artifactId>
+        </dependency>
         <!-- 通用工具-->
         <dependency>
             <groupId>org.dromara</groupId>

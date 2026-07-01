@@ -1,7 +1,7 @@
 --- # 监控中心配置
 spring.boot.admin.client:
   # 增加客户端开关
-  enabled: true
+  enabled: false
   url: http://localhost:9090/admin
   instance:
     service-host-type: IP
@@ -191,75 +191,20 @@ wechat:
   miniapp:
     configs:
       wx8ad0e520bfbd2840: 17db4d58c14ecf25fa6408ac84bf3f15
-
---- # 三方授权
-justauth:
-  # 前端外网访问地址
-  address: http://localhost:80
-  type:
-    maxkey:
-      # maxkey 服务器地址
-      # 注意 如下均配置均不需要修改 maxkey 已经内置好了数据
-      server-url: http://sso.maxkey.top
-      client-id: 876892492581044224
-      client-secret: x1Y5MTMwNzIwMjMxNTM4NDc3Mzche8
-      redirect-uri: ${justauth.address}/social-callback?source=maxkey
-    topiam:
-      # topiam 服务器地址
-      server-url: http://127.0.0.1:1898/api/v1/authorize/y0q************spq***********8ol
-      client-id: 449c4*********937************759
-      client-secret: ac7***********1e0************28d
-      redirect-uri: ${justauth.address}/social-callback?source=topiam
-      scopes: [openid, email, phone, profile]
-    qq:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=qq
-      union-id: false
-    weibo:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=weibo
-    gitee:
-      client-id: 91436b7940090d09c72c7daf85b959cfd5f215d67eea73acbf61b6b590751a98
-      client-secret: 02c6fcfd70342980cd8dd2f2c06c1a350645d76c754d7a264c4e125f9ba915ac
-      redirect-uri: ${justauth.address}/social-callback?source=gitee
-    dingtalk:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=dingtalk
-    baidu:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=baidu
-    csdn:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=csdn
-    coding:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=coding
-      coding-group-name: xx
-    oschina:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=oschina
-    alipay_wallet:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=alipay_wallet
-      alipay-public-key: MIIB**************DAQAB
-    wechat_open:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=wechat_open
-    wechat_mp:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=wechat_mp
-    wechat_enterprise:
-      client-id: 10**********6
-      client-secret: 1f7d08**********5b7**********29e
-      redirect-uri: ${justauth.address}/social-callback?source=wechat_enterprise
-      agent-id: 1000002
+#  # 微信支付配置
+#  pay:
+#    # 商户号
+#    mch-id: 1230000109
+#    # 商户API v3密钥（32位字符串）
+#    api-v3-key: 1234567890ABCDEFGHIJKLMNOPQRSTUV
+#    # 商户证书序列号
+#    cert-serial-no: 5157F09EFDC096DE8C227A25EC8E6813F49XXXX
+#    # 商户私钥（完整的apiclient_key.pem文件内容，包括BEGIN和END行）
+#    private-key: |
+#      -----BEGIN PRIVATE KEY-----
+#      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7...
+#      -----END PRIVATE KEY-----
+#    # 支付回调地址（必须是公网可访问的HTTPS地址）
+#    notify-url: https://your-domain.com/pay/notify
+#    # 小程序 appid
+#    appid: wx8ad0e520bfbd2840

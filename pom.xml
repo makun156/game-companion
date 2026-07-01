@@ -49,7 +49,7 @@
         <anyline.version>8.7.3-20260319</anyline.version>
         <!-- 工作流配置 -->
         <warm-flow.version>1.8.5</warm-flow.version>
-
+        <wx-pay.version>0.2.17</wx-pay.version>
         <!-- 插件版本 -->
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
@@ -95,11 +95,21 @@
             </properties>
         </profile>
     </profiles>
-
+<!--    <dependencies>-->
+<!--        <dependency>-->
+<!--            <groupId>com.github.wechatpay-apiv3</groupId>-->
+<!--            <artifactId>wechatpay-java</artifactId>-->
+<!--            <version>${wx-pay.version}</version>-->
+<!--        </dependency>-->
+<!--    </dependencies>-->
     <!-- 依赖声明 -->
     <dependencyManagement>
         <dependencies>
-
+            <dependency>
+                <groupId>com.github.wechatpay-apiv3</groupId>
+                <artifactId>wechatpay-java</artifactId>
+                <version>${wx-pay.version}</version>
+            </dependency>
             <!-- SpringBoot的依赖配置-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
