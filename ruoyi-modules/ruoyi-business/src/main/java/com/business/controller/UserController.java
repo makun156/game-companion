@@ -131,7 +131,6 @@ public class UserController {
             userType = UserType.XCX_USER.getUserType();
         }
         loginUser.setClientKey("xcx");
-        loginUser.setDeviceType("xcx");
 
         // 生成token
         LoginHelper.login(loginUser, new SaLoginParameter());

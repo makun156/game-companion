@@ -11,6 +11,7 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -48,24 +49,48 @@ public class ResourcesConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 跨域配置
+     * 跨域配置：临时解决本地开发跨域问题
+     * 生产环境建议由 nginx 统一处理，可关闭此处配置
+     * @see nginx.conf
+     */
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+            // 允许所有来源（生产环境建议指定具体域名）
+            .allowedOriginPatterns("*")
+            // 允许的请求方式
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+            // 允许的请求头
+            .allowedHeaders("*")
+            // 是否允许发送Cookie
+            .allowCredentials(true)
+            // 预检请求的有效期（秒），有效期内无需再次发送预检请求
+            .maxAge(3600)
+            // 暴露的响应头
+            .exposedHeaders("Content-Disposition", "Content-Length");
+    }
+
+    /**
+     * CorsFilter 配置，处理 OPTIONS 预检请求
+     * 优先级高于拦截器，确保跨域请求在被拦截前处理
      */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        // 设置访问源地址
+        // 允许所有来源
         config.addAllowedOriginPattern("*");
-        // 设置访问源请求头
+        // 允许所有请求头
         config.addAllowedHeader("*");
-        // 设置访问源请求方法
+        // 允许所有请求方法
         config.addAllowedMethod("*");
-        // 有效期 1800秒
-        config.setMaxAge(1800L);
-        // 添加映射路径，拦截一切请求
+        // 允许携带凭证
+        config.setAllowCredentials(true);
+        // 预检请求缓存时间
+        config.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // 对所有URL生效
         source.registerCorsConfiguration("/**", config);
-        // 返回新的CorsFilter
         return new CorsFilter(source);
     }
 
