@@ -30,7 +30,7 @@ public class XcxLoginVo {
     private String clientId;
 
     /**
-     * 登录方式 1:陪玩 2:用户
+     * 登录人 1:陪玩 2:用户
      */
     private String loginUserType;
 

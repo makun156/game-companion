@@ -1,13 +1,14 @@
-package com.business.controller;
+package com.companion.xcx.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import com.business.domain.vo.UserVo;
 import com.business.domain.vo.XcxLoginVo;
-import com.business.service.IUserService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.domain.R;
+import com.companion.xcx.config.WechatMiniappProperties;
+import com.companion.xcx.service.IXcxLoginService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,20 +16,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * 用户
+ * 小程序登录认证
  *
- * @author Mk
- * @date 2026-06-29
+ * @author system
  */
 @Slf4j
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/user")
-public class UserController {
+@RequestMapping("/auth")
+public class XcxLoginController {
 
-    private final IUserService userService;
+    private final IXcxLoginService loginService;
+    private final WechatMiniappProperties wechatMiniappProperties;
 
     /**
      * 微信一键登录
@@ -40,7 +44,7 @@ public class UserController {
     @PostMapping("/login")
     public R<XcxLoginVo> login(
         @NotBlank(message = "小程序code不能为空") @RequestParam String xcxCode) {
-        return R.ok(userService.login(xcxCode));
+        return R.ok(loginService.login(xcxCode));
     }
 
     /**
@@ -50,7 +54,17 @@ public class UserController {
      */
     @GetMapping("/getInfo")
     public R<UserVo> getInfo() {
-        return R.ok(userService.getInfo());
+        return R.ok(loginService.getInfo());
     }
 
+    /**
+     * 获取小程序配置信息
+     */
+    @SaIgnore
+    @GetMapping("/config")
+    public R<Map<String, String>> getConfig() {
+        Map<String, String> result = new HashMap<>();
+        result.put("appId", wechatMiniappProperties.getAppid());
+        return R.ok(result);
+    }
 }

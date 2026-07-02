@@ -8,8 +8,10 @@ import jakarta.validation.constraints.*;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
+import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.idempotent.annotation.RepeatSubmit;
 import org.dromara.common.log.annotation.Log;
+import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.web.core.BaseController;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.core.domain.R;
@@ -56,12 +58,25 @@ public class GameCompanionUserController extends BaseController {
     }
 
     /**
+     * 获取当前登录陪玩信息
+     */
+    @GetMapping("/info")
+    public R<GameCompanionUserVo> getInfo() {
+        Long userId = LoginHelper.getUserId();
+        GameCompanionUserVo companionUserVo = gameCompanionUserService.queryById(userId);
+        if (companionUserVo == null) {
+            throw new ServiceException("陪玩信息不存在");
+        }
+        return R.ok(companionUserVo);
+    }
+
+    /**
      * 获取陪玩表详细信息
      *
      * @param id 主键
      */
     @GetMapping("/{id}")
-    public R<GameCompanionUserVo> getInfo(@NotNull(message = "主键不能为空")
+    public R<GameCompanionUserVo> getInfoById(@NotNull(message = "主键不能为空")
                                      @PathVariable Long id) {
         return R.ok(gameCompanionUserService.queryById(id));
     }

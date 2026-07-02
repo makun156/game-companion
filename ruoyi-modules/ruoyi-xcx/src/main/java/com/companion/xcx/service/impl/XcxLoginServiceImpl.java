@@ -1,4 +1,4 @@
-package com.business.service.impl;
+package com.companion.xcx.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.stp.parameter.SaLoginParameter;
@@ -10,8 +10,6 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.business.config.WechatMiniAppProperties;
-import com.business.constant.LoginUserType;
 import com.business.domain.GameCompanionUser;
 import com.business.domain.User;
 import com.business.domain.bo.UserBo;
@@ -19,7 +17,6 @@ import com.business.domain.vo.UserVo;
 import com.business.domain.vo.XcxLoginVo;
 import com.business.mapper.GameCompanionUserMapper;
 import com.business.mapper.UserMapper;
-import com.business.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.constant.SystemConstants;
@@ -28,76 +25,26 @@ import org.dromara.common.core.enums.UserType;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
+import com.companion.xcx.config.WechatMiniappProperties;
+import com.companion.xcx.constant.LoginUserType;
+import com.companion.xcx.service.IXcxLoginService;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 /**
- * 用户Service业务层处理
+ * 小程序登录Service业务层处理
  *
- * @author Mk
- * @date 2026-06-23
+ * @author system
  */
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class UserServiceImpl implements IUserService {
+public class XcxLoginServiceImpl implements IXcxLoginService {
 
-    private final UserMapper baseMapper;
-    private final WechatMiniAppProperties wechatMiniAppProperties;
+    private final UserMapper userMapper;
+    private final WechatMiniappProperties wechatMiniappProperties;
     private final GameCompanionUserMapper companionUserMapper;
-
-    /**
-     * 通过手机号查询用户
-     *
-     * @param phonenumber 手机号
-     * @return 用户信息
-     */
-    @Override
-    public UserVo selectUserByPhonenumber(String phonenumber) {
-        LambdaQueryWrapper<User> lqw = Wrappers.lambdaQuery();
-        lqw.eq(User::getPhonenumber, phonenumber);
-        return baseMapper.selectVoOne(lqw);
-    }
-
-    /**
-     * 通过ID查询用户
-     *
-     * @param id 用户ID
-     * @return 用户信息
-     */
-    @Override
-    public UserVo selectUserById(Long id) {
-        return baseMapper.selectVoById(id);
-    }
-
-    /**
-     * 新增用户
-     *
-     * @param bo 用户
-     * @return 是否新增成功
-     */
-    @Override
-    public boolean insertUser(UserBo bo) {
-        User add = MapstructUtils.convert(bo, User.class);
-        boolean flag = baseMapper.insert(add) > 0;
-        if (flag) {
-            bo.setId(add.getId());
-        }
-        return flag;
-    }
-
-    /**
-     * 修改用户
-     *
-     * @param bo 用户
-     * @return 是否修改成功
-     */
-    @Override
-    public boolean updateUser(UserBo bo) {
-        User update = MapstructUtils.convert(bo, User.class);
-        return baseMapper.updateById(update) > 0;
-    }
 
     /**
      * 微信小程序一键登录
@@ -108,10 +55,10 @@ public class UserServiceImpl implements IUserService {
     @Override
     public XcxLoginVo login(String xcxCode) {
         // 获取小程序配置
-        String appid = wechatMiniAppProperties.getAppid();
-        String secret = wechatMiniAppProperties.getSecret();
+        String appid = wechatMiniappProperties.getAppid();
+        String secret = wechatMiniappProperties.getSecret();
         if (StrUtil.isBlank(appid) || StrUtil.isBlank(secret)) {
-            throw new ServiceException("未配置小程序 appid 或 secret，请在 yml 中配置 wechat.miniapp.appid 和 wechat.miniapp.secret");
+            throw new ServiceException("未配置小程序 appid 或 secret，请在 yml 中配置 wechat.miniapp.configs");
         }
         // 获取微信access_token
         HttpResponse getTokenResponse = HttpUtil.createGet("https://api.weixin.qq.com/cgi-bin/token")
@@ -220,6 +167,43 @@ public class UserServiceImpl implements IUserService {
     }
 
     /**
+     * 通过手机号查询用户
+     *
+     * @param phonenumber 手机号
+     * @return 用户信息
+     */
+    private UserVo selectUserByPhonenumber(String phonenumber) {
+        LambdaQueryWrapper<User> lqw = Wrappers.lambdaQuery();
+        lqw.eq(User::getPhonenumber, phonenumber);
+        return userMapper.selectVoOne(lqw);
+    }
+
+    /**
+     * 通过ID查询用户
+     *
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    private UserVo selectUserById(Long id) {
+        return userMapper.selectVoById(id);
+    }
+
+    /**
+     * 新增用户
+     *
+     * @param bo 用户
+     * @return 是否新增成功
+     */
+    private boolean insertUser(UserBo bo) {
+        User add = MapstructUtils.convert(bo, User.class);
+        boolean flag = userMapper.insert(add) > 0;
+        if (flag) {
+            bo.setId(add.getId());
+        }
+        return flag;
+    }
+
+    /**
      * 获取当前登录用户信息
      *
      * @return 用户信息
@@ -233,5 +217,4 @@ public class UserServiceImpl implements IUserService {
         }
         return userVo;
     }
-
 }
