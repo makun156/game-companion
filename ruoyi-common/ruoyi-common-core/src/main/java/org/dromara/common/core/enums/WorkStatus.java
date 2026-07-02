@@ -1,8 +1,13 @@
-package com.business.constant;
+package org.dromara.common.core.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * 陪玩工作状态枚举
+ *
+ * @author Mk
+ */
 @Getter
 @AllArgsConstructor
 public enum WorkStatus {

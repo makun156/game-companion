@@ -1,4 +1,4 @@
-package com.companion.xcx.constant;
+package org.dromara.common.core.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
