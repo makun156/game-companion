@@ -76,7 +76,7 @@ spring:
 # Sa-Token配置 - 小程序独立会话管理
 sa-token:
   # token名称 (同时也是cookie名称)
-  token-name: Xcx-Authorization
+  token-name: Authorization
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
   is-concurrent: true
   # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
@@ -119,7 +119,7 @@ mybatis-plus:
   # 对应的 XML 文件位置
   mapperLocations: classpath*:mapper/**/*Mapper.xml
   # 实体扫描，多个package用逗号或者分号分隔
-  typeAliasesPackage: com.companion.xcx.**.domain
+  typeAliasesPackage: com.companion.xcx.**.domain,org.dromara.system.**.domain
   global-config:
     dbConfig:
       # 主键类型

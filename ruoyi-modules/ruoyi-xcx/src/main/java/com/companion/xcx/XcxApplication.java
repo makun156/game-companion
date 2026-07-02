@@ -10,8 +10,8 @@ import org.springframework.boot.context.metrics.buffering.BufferingApplicationSt
  *
  * @author system
  */
-@SpringBootApplication(scanBasePackages = {"com.companion.xcx", "org.dromara.common"})
-@MapperScan("com.business.mapper")
+@SpringBootApplication(scanBasePackages = {"com.companion.xcx", "com.business", "org.dromara.common"})
+@MapperScan({"com.business.mapper", "org.dromara.system.mapper"})
 public class XcxApplication {
 
     public static void main(String[] args) {

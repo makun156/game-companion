@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 小程序登录认证
+ * 小程序登录认证-controller
  *
  * @author system
  */
