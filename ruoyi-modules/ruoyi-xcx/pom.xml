@@ -31,13 +31,15 @@
             <exclusions>
                 <exclusion>
                     <groupId>org.dromara</groupId>
-                    <artifactId>ruoyi-common-translation</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.dromara</groupId>
                     <artifactId>ruoyi-common-tenant</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- 系统模块依赖 - 提供OssService实现 -->
+        <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>ruoyi-system</artifactId>
         </dependency>
 
         <!-- 通用工具 -->
