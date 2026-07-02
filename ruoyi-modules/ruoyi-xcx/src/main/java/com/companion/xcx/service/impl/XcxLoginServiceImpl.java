@@ -24,7 +24,7 @@ import org.dromara.common.core.domain.model.XcxLoginUser;
 import org.dromara.common.core.enums.UserType;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
-import org.dromara.common.core.enums.LoginUserType;
+import com.business.enums.LoginUserType;
 import org.dromara.common.satoken.utils.LoginHelper;
 import com.companion.xcx.config.WechatMiniappProperties;
 import com.companion.xcx.service.IXcxLoginService;

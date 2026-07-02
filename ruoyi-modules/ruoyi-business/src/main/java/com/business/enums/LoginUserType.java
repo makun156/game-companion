@@ -1,4 +1,4 @@
-package org.dromara.common.core.enums;
+package com.business.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
