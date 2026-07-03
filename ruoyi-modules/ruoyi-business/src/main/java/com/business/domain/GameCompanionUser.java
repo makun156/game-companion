@@ -83,12 +83,12 @@ public class GameCompanionUser extends BaseEntity {
     private Integer totalOrders;
 
     /**
-     * 状态
+     * 状态 0 正常 1 禁用
      */
     private String status;
 
     /**
-     * 工作状态
+     * 工作状态 1接单中 2陪玩中 3暂离4 休息中 5离线
      */
     private String workStatus;
 

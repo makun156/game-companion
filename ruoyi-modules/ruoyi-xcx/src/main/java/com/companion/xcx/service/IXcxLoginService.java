@@ -24,4 +24,9 @@ public interface IXcxLoginService {
      * @return 用户信息
      */
     UserVo getInfo();
+
+    /**
+     * 退出登录
+     */
+    void logout();
 }

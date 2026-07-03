@@ -217,4 +217,12 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
         }
         return userVo;
     }
+
+    /**
+     * 退出登录
+     */
+    @Override
+    public void logout() {
+        StpUtil.logout();
+    }
 }

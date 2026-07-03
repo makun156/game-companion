@@ -1,5 +1,6 @@
 package com.companion.xcx.service.impl;
 
+import com.business.domain.bo.GameCompanionUserBo;
 import com.business.domain.vo.GameCompanionUserVo;
 import com.business.service.IGameCompanionUserService;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,18 @@ public class XcxCompanionUserServiceImpl implements IXcxCompanionUserService {
             throw new ServiceException("陪玩信息不存在");
         }
         return companionUserVo;
+    }
+
+    /**
+     * 修改当前登录陪玩信息
+     *
+     * @param bo 陪玩信息
+     * @return 是否修改成功
+     */
+    @Override
+    public Boolean updateInfo(GameCompanionUserBo bo) {
+        Long userId = LoginHelper.getUserId();
+        bo.setId(userId);
+        return gameCompanionUserService.updateByBo(bo);
     }
 }

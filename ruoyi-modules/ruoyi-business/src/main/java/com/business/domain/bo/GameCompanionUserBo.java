@@ -25,7 +25,6 @@ public class GameCompanionUserBo extends BaseEntity {
     /**
      *
      */
-    @NotNull(message = "不能为空", groups = { EditGroup.class })
     private Long id;
 
     /**

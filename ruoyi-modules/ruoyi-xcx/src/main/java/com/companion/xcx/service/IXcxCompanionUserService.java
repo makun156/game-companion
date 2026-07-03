@@ -1,5 +1,6 @@
 package com.companion.xcx.service;
 
+import com.business.domain.bo.GameCompanionUserBo;
 import com.business.domain.vo.GameCompanionUserVo;
 
 /**
@@ -15,4 +16,12 @@ public interface IXcxCompanionUserService {
      * @return 陪玩信息
      */
     GameCompanionUserVo getInfo();
+
+    /**
+     * 修改当前登录陪玩信息
+     *
+     * @param bo 陪玩信息
+     * @return 是否修改成功
+     */
+    Boolean updateInfo(GameCompanionUserBo bo);
 }
