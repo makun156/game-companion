@@ -89,6 +89,11 @@ public class User extends BaseEntity {
     private Date loginDate;
 
 
+    /**
+     * Wechat mini program openid.
+     */
+    private String openid;
+
     private Date updateTime;
 
 }

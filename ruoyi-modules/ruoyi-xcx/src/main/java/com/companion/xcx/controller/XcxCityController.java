@@ -22,7 +22,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/city")
+@RequestMapping("/xcx/city")
 public class XcxCityController {
 
     private final IXcxCityService cityService;

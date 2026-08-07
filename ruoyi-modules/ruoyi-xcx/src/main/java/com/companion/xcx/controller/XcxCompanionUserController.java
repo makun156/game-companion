@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/companion/user")
+@RequestMapping("/xcx/companion/user")
 public class XcxCompanionUserController {
 
     private final IXcxCompanionUserService companionUserService;

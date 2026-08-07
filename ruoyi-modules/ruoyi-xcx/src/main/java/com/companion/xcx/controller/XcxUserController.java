@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/xcx/user")
 public class XcxUserController {
 
     private final IXcxUserService userService;

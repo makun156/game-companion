@@ -47,9 +47,9 @@ spring:
           driverClassName: com.mysql.cj.jdbc.Driver
           # jdbc 所有参数配置参考 https://lionli.blog.csdn.net/article/details/122018562
           # rewriteBatchedStatements=true 批处理优化 大幅提升批量插入更新删除性能(对数据库有性能损耗 使用批量操作应考虑性能问题)
-          url: jdbc:mysql://192.168.1.17:3306/ry-vue-plus?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
+          url: jdbc:mysql://localhost:3306/ry-vue-plus?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
           username: root
-          password: mysql123456
+          password: 123456
       hikari:
         # 最大连接池数量
         maxPoolSize: 20
@@ -70,13 +70,13 @@ spring:
 spring.data:
   redis:
     # 地址
-    host: 192.168.1.17
+    host: localhost
     # 端口，默认为6379
     port: 6379
     # 数据库索引
     database: 1
     # redis 密码必须配置
-    password: redis123456
+#    password: redis123456
     # 连接超时时间
     timeout: 10s
     # 是否开启ssl
@@ -164,3 +164,16 @@ wechat:
   miniapp:
     configs:
       wx8ad0e520bfbd2840: 17db4d58c14ecf25fa6408ac84bf3f15
+  pay:
+    #商户号
+    merchantId: 1747424896
+    #商户证书序列号
+    merchantSerialNumber: 110F19A8A08329BA5CBC8CB2462025EC22D0EB85
+    #商户APIv3密钥
+    apiV3Key: 1yangjinfudeanjiachao15903635010
+    #小程序appid
+    appid: wx8ad0e520bfbd2840
+    #私钥文件路径
+    privateKeyPath: 1747424896_20260628_cert/apiclient_key.pem
+    #支付回调地址（生产环境需要替换为正式域名）
+    notifyUrl: https://clinic-amid-unlovable.ngrok-free.dev/xcx/pay/notify

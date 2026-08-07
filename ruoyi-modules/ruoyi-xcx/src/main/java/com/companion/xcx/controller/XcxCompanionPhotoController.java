@@ -22,7 +22,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/companion/photo")
+@RequestMapping("/xcx/companion/photo")
 public class XcxCompanionPhotoController {
 
     private final IXcxCompanionPhotoService companionPhotoService;

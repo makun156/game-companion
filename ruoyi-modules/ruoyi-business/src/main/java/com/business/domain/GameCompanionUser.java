@@ -53,6 +53,11 @@ public class GameCompanionUser extends BaseEntity {
     private String phone;
 
     /**
+     * Wechat mini program openid.
+     */
+    private String openid;
+
+    /**
      * 头像
      */
     private String avatar;

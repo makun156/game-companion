@@ -16,7 +16,7 @@ public interface IXcxLoginService {
      * @param xcxCode 小程序code
      * @return 登录信息
      */
-    XcxLoginVo login(String xcxCode);
+    XcxLoginVo login(String xcxCode, String wxCode);
 
     /**
      * 获取当前登录用户信息

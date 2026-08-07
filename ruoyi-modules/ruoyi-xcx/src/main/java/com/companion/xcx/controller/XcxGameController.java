@@ -23,7 +23,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/game")
+@RequestMapping("/xcx/game")
 public class XcxGameController {
 
     private final IXcxGameService gameService;

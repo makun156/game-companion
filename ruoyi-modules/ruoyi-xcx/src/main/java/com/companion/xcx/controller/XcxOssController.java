@@ -25,7 +25,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/oss")
+@RequestMapping("/xcx/oss")
 public class XcxOssController {
 
     private final ISysOssService ossService;
