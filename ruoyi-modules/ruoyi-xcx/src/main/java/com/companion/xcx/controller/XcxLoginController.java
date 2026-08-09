@@ -26,7 +26,7 @@ import java.util.Map;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/xcx/auth")
 public class XcxLoginController {
 
     private final IXcxLoginService loginService;
@@ -42,8 +42,9 @@ public class XcxLoginController {
     @Log(title = "小程序登录", businessType = BusinessType.OTHER)
     @PostMapping("/login")
     public R<XcxLoginVo> login(
-        @NotBlank(message = "小程序code不能为空") @RequestParam String xcxCode) {
-        return R.ok(loginService.login(xcxCode));
+        @NotBlank(message = "小程序code不能为空") @RequestParam String xcxCode,
+        @RequestParam(required = false) String wxCode) {
+        return R.ok(loginService.login(xcxCode, wxCode));
     }
 
     /**

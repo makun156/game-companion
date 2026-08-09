@@ -8,7 +8,6 @@ import com.business.domain.vo.EsportsHotelVo;
 import com.business.mapper.CityMapper;
 import com.business.mapper.EsportsHotelMapper;
 import com.companion.xcx.service.IXcxMerchantService;
-import com.companion.xcx.service.IXcxShopService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

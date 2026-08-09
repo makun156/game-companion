@@ -53,7 +53,7 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
      * @return 登录信息
      */
     @Override
-    public XcxLoginVo login(String xcxCode) {
+    public XcxLoginVo login(String xcxCode, String wxCode) {
         // 获取小程序配置
         String appid = wechatMiniappProperties.getAppid();
         String secret = wechatMiniappProperties.getSecret();
@@ -101,6 +101,7 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
 
         // 通过手机号查找或创建用户
         Object obj = loadUserByPhoneNumber(phoneNumber);
+        bindOpenid(obj, wxCode);
 
         // 构建小程序登录用户
         XcxLoginUser loginUser = new XcxLoginUser();
@@ -129,6 +130,47 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
         loginVo.setExpireIn(StpUtil.getTokenTimeout());
         loginVo.setLoginUserType(userType);
         return loginVo;
+    }
+
+    /**
+     * Bind wx.login() openid to the current user so pay orders can reuse it.
+     */
+    private void bindOpenid(Object user, String wxCode) {
+        if (StrUtil.isBlank(wxCode)) {
+            return;
+        }
+        String openid = getOpenidByCode(wxCode);
+        if (user instanceof GameCompanionUser companionUser) {
+            GameCompanionUser update = new GameCompanionUser();
+            update.setId(companionUser.getId());
+            update.setOpenid(openid);
+            companionUserMapper.updateById(update);
+        } else {
+            UserVo userVo = (UserVo) user;
+            User update = new User();
+            update.setId(userVo.getId());
+            update.setOpenid(openid);
+            userMapper.updateById(update);
+        }
+    }
+
+    private String getOpenidByCode(String code) {
+        HttpResponse response = HttpUtil.createGet("https://api.weixin.qq.com/sns/jscode2session")
+            .form("appid", wechatMiniappProperties.getAppid())
+            .form("secret", wechatMiniappProperties.getSecret())
+            .form("js_code", code)
+            .form("grant_type", "authorization_code")
+            .execute();
+        if (!response.isOk()) {
+            throw new ServiceException("获取微信openid失败");
+        }
+        Map<String, Object> result = JSONUtil.toBean(response.body(), Map.class);
+        String openid = (String) result.get("openid");
+        if (StrUtil.isBlank(openid)) {
+            log.error("jscode2session failed, response={}", response.body());
+            throw new ServiceException("获取微信openid失败");
+        }
+        return openid;
     }
 
     /**

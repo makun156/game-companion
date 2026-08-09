@@ -22,7 +22,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/merchant")
+@RequestMapping("/xcx/merchant")
 public class XcxMerchantController {
 
     private final IXcxMerchantService shopService;

@@ -48,7 +48,7 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: @profiles.active@
+    active: dev
   # 文件上传
   servlet:
     multipart:
@@ -100,7 +100,8 @@ security:
     - /error
     - /*/api-docs
     - /*/api-docs/**
-    - /auth/login
+    - /xcx/auth/login
+    - /xcx/pay/notify
 
 # 多租户配置
 tenant:

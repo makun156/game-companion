@@ -1,4 +1,4 @@
---- # 监控中心配置
+﻿--- # 监控中心配置
 spring.boot.admin.client:
   # 增加客户端开关
   enabled: false
@@ -175,5 +175,9 @@ wechat:
     appid: wx8ad0e520bfbd2840
     #私钥文件路径
     privateKeyPath: 1747424896_20260628_cert/apiclient_key.pem
+    #微信支付公钥ID（商户平台-账户中心-API安全页面获取，格式：PUB_KEY_ID_xxx；为空则使用平台证书模式）
+    publicKeyId: PUB_KEY_ID_0117474248962026062800381566004202
+    #微信支付公钥文件路径（商户平台下载的微信支付公钥PEM文件，放入证书目录）
+    publicKeyPath: 1747424896_20260628_cert/pub_key.pem
     #支付回调地址（生产环境需要替换为正式域名）
     notifyUrl: https://clinic-amid-unlovable.ngrok-free.dev/xcx/pay/notify
