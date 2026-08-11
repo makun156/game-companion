@@ -102,10 +102,10 @@ public class WechatPayConfig {
                 .build();
             // 构建通知解析器，用于验签并解析支付回调通知
             notificationParser = new NotificationParser(notificationConfig);
-            log.info("Wechat Pay config initialized, merchantId={}, appid={}, mode={}",
+            log.info("微信支付配置初始化成功，merchantId={}, appid={}, mode={}",
                 merchantId, appid, StrUtil.isNotBlank(publicKeyId) ? "publicKey" : "certificate");
         } catch (Exception e) {
-            log.error("Wechat Pay config init failed", e);
+            log.error("微信支付配置初始化失败", e);
         }
     }
 

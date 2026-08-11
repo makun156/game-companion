@@ -167,7 +167,7 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
         Map<String, Object> result = JSONUtil.toBean(response.body(), Map.class);
         String openid = (String) result.get("openid");
         if (StrUtil.isBlank(openid)) {
-            log.error("jscode2session failed, response={}", response.body());
+            log.error("微信登录code2session接口调用失败，response={}", response.body());
             throw new ServiceException("获取微信openid失败");
         }
         return openid;

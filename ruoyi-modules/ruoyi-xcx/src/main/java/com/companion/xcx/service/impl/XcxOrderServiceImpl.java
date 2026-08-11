@@ -139,7 +139,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         vo.setSignType(response.getSignType());
         vo.setPaySign(response.getPaySign());
 
-        log.info("Companion order created, orderNo={}, amount={}分, companionUserId={}",
+        log.info("陪玩订单创建成功，orderNo={}, amount={}分, companionUserId={}",
             companionOrder.getOrderNo(), bo.getTotalAmount(), bo.getCompanionUserId());
         return vo;
     }
@@ -189,7 +189,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         // 同时关闭关联的支付订单
         payOrderService.markClosed(order.getOrderNo());
 
-        log.info("Companion order cancelled, orderNo={}", orderNo);
+        log.info("陪玩订单已取消，orderNo={}", orderNo);
         return true;
     }
 

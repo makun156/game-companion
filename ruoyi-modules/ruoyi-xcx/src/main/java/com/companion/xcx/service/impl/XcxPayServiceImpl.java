@@ -162,7 +162,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         vo.setPackageVal(response.getPackageVal());
         vo.setSignType(response.getSignType());
         vo.setPaySign(response.getPaySign());
-        log.info("Mini program pay order created, orderNo={}, amount={}分", orderNo, bo.getAmount());
+        log.info("小程序支付订单创建成功，orderNo={}, amount={}分", orderNo, bo.getAmount());
         return vo;
     }
 
@@ -185,7 +185,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
                     payOrderService.markClosed(orderNo);
                 }
             } catch (Exception e) {
-                log.warn("Wechat query order failed, orderNo={}", orderNo, e);
+                log.warn("查询微信支付订单状态失败，orderNo={}", orderNo, e);
             }
         }
         return payOrderService.getByOrderNo(orderNo);
@@ -222,7 +222,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
             } catch (ServiceException e) {
                 throw e;
             } catch (Exception e) {
-                log.warn("Wechat pre-close query failed, orderNo={}", orderNo, e);
+                log.warn("关单前查询微信订单状态失败，orderNo={}", orderNo, e);
             }
             // 调用微信支付关单接口
             try {
@@ -231,7 +231,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
                 closeRequest.setMchid(wechatPayConfig.getMerchantId());
                 wechatPayConfig.getJsapiServiceExtension().closeOrder(closeRequest);
             } catch (Exception e) {
-                log.warn("Wechat close order failed, orderNo={}", orderNo, e);
+                log.warn("微信支付关单失败，orderNo={}", orderNo, e);
             }
         }
         // 更新本地订单状态为已关闭
@@ -262,12 +262,12 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         // 校验事件类型是否为支付成功
         String eventType = JSONUtil.parseObj(body).getStr("event_type");
         if (!EVENT_TRANSACTION_SUCCESS.equals(eventType)) {
-            log.warn("Unexpected Wechat Pay notify event type: {}", eventType);
+            log.warn("微信支付回调事件类型异常: {}", eventType);
             return;
         }
         // 校验交易状态是否为成功
         if (transaction.getTradeState() != Transaction.TradeStateEnum.SUCCESS) {
-            log.warn("Wechat Pay notify trade state is not SUCCESS, state={}",
+            log.warn("微信支付回调交易状态不是SUCCESS，state={}",
                 transaction.getTradeState());
             return;
         }
@@ -287,16 +287,16 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
             order.getOrderNo(), transaction.getTransactionId(),
             parsePayTime(transaction.getSuccessTime()));
         if (updated) {
-            log.info("Pay order marked paid, orderNo={}, transactionId={}",
+            log.info("支付订单已标记为已支付，orderNo={}, transactionId={}",
                 order.getOrderNo(), transaction.getTransactionId());
         } else {
             // 处理重复回调：如果订单已标记为支付成功且交易号一致，则忽略
             PayOrder latest = payOrderService.getByOrderNo(order.getOrderNo());
             if (latest != null && latest.getStatus() == PayOrderStatus.PAID
                 && StrUtil.equals(latest.getTransactionId(), transaction.getTransactionId())) {
-                log.info("Duplicate notify already handled, orderNo={}", order.getOrderNo());
+                log.info("重复的支付回调已处理，orderNo={}", order.getOrderNo());
             } else {
-                log.warn("Pay order status update skipped, orderNo={}", order.getOrderNo());
+                log.warn("支付订单状态更新跳过，orderNo={}", order.getOrderNo());
             }
         }
     }
@@ -361,7 +361,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         Map<String, Object> result = JSONUtil.toBean(response.body(), Map.class);
         String openid = (String) result.get("openid");
         if (StrUtil.isBlank(openid)) {
-            log.error("jscode2session failed, response={}", response.body());
+            log.error("微信code2session接口调用失败，response={}", response.body());
             throw new ServiceException("获取微信openid失败");
         }
         return openid;
@@ -433,7 +433,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         try {
             return Date.from(OffsetDateTime.parse(successTime).toInstant());
         } catch (Exception e) {
-            log.warn("Parse Wechat pay success time failed: {}", successTime);
+            log.warn("解析微信支付成功时间失败: {}", successTime);
             return new Date();
         }
     }

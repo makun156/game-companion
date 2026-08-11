@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 微信小程序支付控制器
+ * 小程序微信支付-controller
  *
  * @author companion
  */
@@ -84,7 +84,7 @@ public class XcxPayController {
         try {
             body = request.getReader().lines().collect(Collectors.joining());
         } catch (IOException e) {
-            log.error("Read Wechat Pay notify body failed", e);
+            log.error("读取微信支付回调请求体失败", e);
             writeNotifyFail(response, HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -103,7 +103,7 @@ public class XcxPayController {
             response.setContentType("application/json");
             response.getWriter().write("{\"code\":\"SUCCESS\",\"message\":\"成功\"}");
         } catch (Exception e) {
-            log.error("Handle Wechat Pay notify failed", e);
+            log.error("处理微信支付回调失败", e);
             writeNotifyFail(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
