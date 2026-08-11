@@ -3,7 +3,7 @@ package com.companion.xcx.domain.bo;
 import lombok.Data;
 
 /**
- * 小程序支付下单请求参数
+ * 小程序支付下单请求参数.
  *
  * @author companion
  */
@@ -40,11 +40,6 @@ public class PayCreateBo {
      * 业务ID
      */
     private Long bizId;
-
-    /**
-     * 商户自定义数据，查询和支付回调时原样返回，最大128个字符
-     */
-    private String attach;
 
     /**
      * 订单过期时间（分钟），默认15分钟

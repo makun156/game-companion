@@ -46,6 +46,11 @@ public class PayOrder extends BaseEntity {
     private Long bizId;
 
     /**
+     * 陪玩订单ID（t_companion_order），用于关联陪玩业务订单.
+     */
+    private Long companionOrderId;
+
+    /**
      * 微信支付用户的openid.
      */
     private String openid;
@@ -64,11 +69,6 @@ public class PayOrder extends BaseEntity {
      * 订单状态：WAITING-待支付，PAID-已支付，CLOSED-已关闭，REFUNDED-已退款.
      */
     private PayOrderStatus status;
-
-    /**
-     * 商户自定义数据，微信支付回调时原样返回.
-     */
-    private String attach;
 
     /**
      * 微信支付交易号.

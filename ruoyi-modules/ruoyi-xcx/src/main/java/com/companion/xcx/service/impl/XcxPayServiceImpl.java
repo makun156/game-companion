@@ -85,10 +85,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
         if (bo.getAmount() == null || bo.getAmount() <= 0 || bo.getAmount() > Integer.MAX_VALUE) {
             throw new ServiceException("支付金额必须大于0且不超过21亿元");
         }
-        if (bo.getAttach() != null && bo.getAttach().length() > 128) {
-            throw new ServiceException("attach不能超过128个字符");
-        }
-        // 校验订单号格式（支持传入自定义订单号，为空时自动生成）
+// 校验订单号格式（支持传入自定义订单号，为空时自动生成）
         String orderNo = StrUtil.blankToDefault(bo.getOrderNo(), generateOrderNo());
         if (!ORDER_NO_PATTERN.matcher(orderNo).matches()) {
             throw new ServiceException("商户订单号需6-32位数字、字母或_-|*");
@@ -112,8 +109,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
             order.setTitle(bo.getDescription());
             order.setAmount(bo.getAmount());
             order.setStatus(PayOrderStatus.WAITING);
-            order.setAttach(StrUtil.nullToDefault(bo.getAttach(), ""));
-            order.setExpireTime(expireTime);
+order.setExpireTime(expireTime);
             payOrderService.createOrder(order);
         } else {
             // 订单已存在，校验归属和状态
@@ -130,8 +126,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
             order.setOpenid(openid);
             order.setTitle(bo.getDescription());
             order.setAmount(bo.getAmount());
-            order.setAttach(StrUtil.nullToDefault(bo.getAttach(), ""));
-            order.setExpireTime(expireTime);
+order.setExpireTime(expireTime);
             payOrderService.updateOrder(order);
         }
 
@@ -142,8 +137,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
         prepayRequest.setDescription(bo.getDescription());
         prepayRequest.setOutTradeNo(orderNo);
         prepayRequest.setTimeExpire(formatExpireTime(expireTime));
-        prepayRequest.setAttach(order.getAttach());
-        prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
+prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
 
         // 设置支付金额（单位：分）
         Amount amount = new Amount();
