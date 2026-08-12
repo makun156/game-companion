@@ -1,4 +1,4 @@
-package com.companion.xcx.controller;
+﻿package com.companion.xcx.controller;
 
 import com.business.domain.CompanionOrder;
 import com.companion.xcx.domain.bo.CompanionOrderCreateBo;
@@ -84,6 +84,42 @@ public class XcxOrderController {
     @PostMapping("/cancel/{orderNo}")
     public R<Boolean> cancelOrder(@PathVariable String orderNo) {
         return R.ok(orderService.cancelOrder(orderNo));
+    }
+
+    /**
+     * 开始服务（陪玩端）：PAID → IN_PROGRESS.
+     */
+    @Log(title = "陪玩开始服务", businessType = BusinessType.UPDATE)
+    @PostMapping("/start-service/{orderNo}")
+    public R<Boolean> startService(@PathVariable String orderNo) {
+        return R.ok(orderService.startService(orderNo));
+    }
+
+    /**
+     * 结束服务（陪玩端）：IN_PROGRESS → COMPLETED.
+     */
+    @Log(title = "陪玩结束服务", businessType = BusinessType.UPDATE)
+    @PostMapping("/complete-service/{orderNo}")
+    public R<Boolean> completeService(@PathVariable String orderNo) {
+        return R.ok(orderService.completeService(orderNo));
+    }
+
+    /**
+     * 申请退款（用户端）：PAID → REFUNDING.
+     */
+    @Log(title = "陪玩申请退款", businessType = BusinessType.UPDATE)
+    @PostMapping("/refund/{orderNo}")
+    public R<Boolean> requestRefund(@PathVariable String orderNo, @RequestParam(required = false) String reason) {
+        return R.ok(orderService.requestRefund(orderNo, reason));
+    }
+
+    /**
+     * 修改服务时间（用户端）.
+     */
+    @Log(title = "陪玩修改服务时间", businessType = BusinessType.UPDATE)
+    @PostMapping("/reschedule")
+    public R<Boolean> rescheduleOrder(@RequestParam String orderNo, @RequestParam String appointmentTime) {
+        return R.ok(orderService.rescheduleOrder(orderNo, appointmentTime));
     }
 
 }

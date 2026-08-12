@@ -1,4 +1,4 @@
-package com.companion.xcx.service.impl;
+﻿package com.companion.xcx.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
@@ -33,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.enums.UserType;
 import org.dromara.common.redis.utils.RedisUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 小程序陪玩订单服务实现.
@@ -76,6 +79,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     private final WechatPayConfig wechatPayConfig;
     private final UserMapper userMapper;
     private final GameCompanionUserMapper companionUserMapper;
+    private final RedissonClient redissonClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -90,48 +94,69 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         if (bo.getTotalAmount() == null || bo.getTotalAmount() <= 0) {
             throw new ServiceException("订单金额不合法");
         }
-        // 校验预约时间并检测冲突
+        // 校验预约时间并检测冲突（分布式锁保护，防止并发重复下单）
         Date appointmentTime = parseAppointmentTime(bo.getAppointmentTime());
-        checkTimeSlotConflict(bo.getCompanionUserId(), appointmentTime, bo.getDuration(), null);
+        String lockKey = "companion:schedule:lock:" + bo.getCompanionUserId();
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        try {
+            checkTimeSlotConflict(bo.getCompanionUserId(), appointmentTime, bo.getDuration(), null);
+            // 检测通过后立即写入 Redis，锁定该时间段
+            addSchedule(bo.getCompanionUserId(), appointmentTime, bo.getDuration(), null, CompanionOrderStatus.PENDING_PAYMENT.getCode());
+        } finally {
+            lock.unlock();
+        }
 
-        // 根据当前登录用户ID查库获取openid，前端无需传code
-        String openid = getStoredOpenid();
+        // 锁已释放，继续执行 DB 操作
+        String openid = null;
+        PayOrder payOrder = null;
+        Long companionOrderId = null;
+        String buildOrderNo = null;
+        CompanionOrder companionOrder=null;
+        try {
+            // 根据当前登录用户ID查库获取openid，前端无需传code
+            openid = getStoredOpenid();
 
-        String buildOrderNo = generateOrderNo("CO");
-        // 1. 创建陪玩订单
-        CompanionOrder companionOrder = new CompanionOrder();
-        companionOrder.setOrderNo(buildOrderNo);
-        companionOrder.setUserId(LoginHelper.getUserId());
-        companionOrder.setCompanionUserId(bo.getCompanionUserId());
-        companionOrder.setGameId(bo.getGameId());
-        companionOrder.setGameLevelId(bo.getGameLevelId());
-        companionOrder.setDuration(bo.getDuration());
-        companionOrder.setUnitPrice(bo.getUnitPrice());
-        companionOrder.setTotalAmount(bo.getTotalAmount());
-        companionOrder.setPaidAmount(0L);
-        companionOrder.setRefundAmount(0L);
-        companionOrder.setOrderStatus(CompanionOrderStatus.PENDING_PAYMENT);
-        companionOrder.setRemark(bo.getRemark());
-        companionOrder.setAppointmentTime(appointmentTime);
-        companionOrderMapper.insert(companionOrder);
+            buildOrderNo = generateOrderNo("CO");
+            // 1. 创建陪玩订单
+            companionOrder = new CompanionOrder();
+            companionOrder.setOrderNo(buildOrderNo);
+            companionOrder.setUserId(LoginHelper.getUserId());
+            companionOrder.setCompanionUserId(bo.getCompanionUserId());
+            companionOrder.setGameId(bo.getGameId());
+            companionOrder.setGameLevelId(bo.getGameLevelId());
+            companionOrder.setDuration(bo.getDuration());
+            companionOrder.setUnitPrice(bo.getUnitPrice());
+            companionOrder.setTotalAmount(bo.getTotalAmount());
+            companionOrder.setPaidAmount(0L);
+            companionOrder.setRefundAmount(0L);
+            companionOrder.setOrderStatus(CompanionOrderStatus.PENDING_PAYMENT);
+            companionOrder.setRemark(bo.getRemark());
+            companionOrder.setAppointmentTime(appointmentTime);
+            companionOrderMapper.insert(companionOrder);
+            companionOrderId = companionOrder.getId();
 
-        // 2. 创建支付订单，关联陪玩订单
-        PayOrder payOrder = new PayOrder();
-        payOrder.setOrderNo(buildOrderNo);
-        payOrder.setUserId(LoginHelper.getUserId());
-        payOrder.setOpenid(openid);
-        payOrder.setCompanionOrderId(companionOrder.getId());
-        payOrder.setBizType(BIZ_TYPE_COMPANION_ORDER);
-        payOrder.setBizId(companionOrder.getId());
-        payOrder.setTitle(getOrderTitle(bo));
-        payOrder.setAmount(bo.getTotalAmount());
-        payOrder.setStatus(PayOrderStatus.WAITING);
-        payOrder.setExpireTime(calcExpireTime(bo.getExpireMinutes()));
-        payOrderService.createOrder(payOrder);
+            // 2. 创建支付订单，关联陪玩订单
+            payOrder = new PayOrder();
+            payOrder.setOrderNo(buildOrderNo);
+            payOrder.setUserId(LoginHelper.getUserId());
+            payOrder.setOpenid(openid);
+            payOrder.setCompanionOrderId(companionOrderId);
+            payOrder.setBizType(BIZ_TYPE_COMPANION_ORDER);
+            payOrder.setBizId(companionOrderId);
+            payOrder.setTitle(getOrderTitle(bo));
+            payOrder.setAmount(bo.getTotalAmount());
+            payOrder.setStatus(PayOrderStatus.WAITING);
+            payOrder.setExpireTime(calcExpireTime(bo.getExpireMinutes()));
+            payOrderService.createOrder(payOrder);
 
-
-        // 3.5 写入预约时间到 Redis
-        addSchedule(bo.getCompanionUserId(), appointmentTime, bo.getDuration(), companionOrder.getId());
+            // 更新 Redis 预约记录中的 orderId
+            updateScheduleOrderId(bo.getCompanionUserId(), appointmentTime, companionOrderId);
+        } catch (Exception e) {
+            // DB 操作失败，清理 Redis 预约记录，避免"幽灵"预约
+            removeSchedule(bo.getCompanionUserId(), appointmentTime);
+            throw new ServiceException("订单创建失败，请稍后再试");
+        }
 
         // 4. 调用微信支付 JSAPI 预下单
         PrepayRequest prepayRequest = new PrepayRequest();
@@ -163,8 +188,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         vo.setSignType(response.getSignType());
         vo.setPaySign(response.getPaySign());
         RedisUtils.setCacheObject(PREPARE_ORDER_KEY + payOrder.getOrderNo(), JSONUtil.toJsonStr(vo), Duration.ofMinutes(15));
-        log.info("陪玩订单创建成功，orderNo={}, amount={}分, companionUserId={}",
-            companionOrder.getOrderNo(), bo.getTotalAmount(), bo.getCompanionUserId());
+        log.info("陪玩订单创建成功，orderNo={}, amount={}分, companionUserId={}", companionOrder.getOrderNo(), bo.getTotalAmount(), bo.getCompanionUserId());
         return vo;
     }
 
@@ -245,11 +269,17 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             throw new ServiceException("当前订单状态不允许重新支付");
         }
 
-        // 2.5 重新检查预约时间是否有效（Redis 可能已过期，需要重新写入）
-        // 先移除旧的预约记录（如果有冲突的会被清理）
-        checkTimeSlotConflict(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId());
-        // 重新写入预约时间（Redis TTL 可能已过期）
-        addSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId());
+        // 2.5 重新检查预约时间是否有效（分布式锁保护，防止并发冲突）
+        String lockKey = "companion:schedule:lock:" + companionOrder.getCompanionUserId();
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        try {
+            checkTimeSlotConflict(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId());
+            // 重新写入预约时间（Redis TTL 可能已过期）
+            addSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId(), CompanionOrderStatus.PENDING_PAYMENT.getCode());
+        } finally {
+            lock.unlock();
+        }
         // 2. 查询关联的支付订单
         LambdaQueryWrapper<PayOrder> payWrapper = Wrappers.lambdaQuery();
         payWrapper.eq(PayOrder::getCompanionOrderId, companionOrder.getId());
@@ -270,6 +300,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             payOrderService.markClosed(payOrder.getOrderNo());
             companionOrder.setOrderStatus(CompanionOrderStatus.EXPIRED);
             companionOrderMapper.updateById(companionOrder);
+            removeSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime());
             throw new ServiceException("支付已过期，请重新下单");
         }
 
@@ -286,6 +317,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         companionOrder.setOrderStatus(CompanionOrderStatus.EXPIRED);
         companionOrderMapper.updateById(companionOrder);
         payOrderService.markClosed(payOrder.getOrderNo());
+        removeSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime());
         throw new ServiceException("支付已过期，请重新下单");
     }
 
@@ -298,6 +330,145 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
 
 
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean startService(String orderNo) {
+        // 查询订单
+        LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(CompanionOrder::getOrderNo, orderNo);
+        CompanionOrder order = companionOrderMapper.selectOne(wrapper);
+        if (order == null) {
+            throw new ServiceException("订单不存在");
+        }
+        // 校验调用者是否为该陪玩本人
+        if (!order.getCompanionUserId().equals(LoginHelper.getUserId())) {
+            throw new ServiceException("无权操作该订单");
+        }
+        // 仅允许 PAID 状态开始服务
+        if (order.getOrderStatus() != CompanionOrderStatus.PAID) {
+            throw new ServiceException("当前订单状态不允许开始服务");
+        }
+        // 更新订单状态为 IN_PROGRESS，记录实际上单时间
+        order.setOrderStatus(CompanionOrderStatus.IN_PROGRESS);
+        order.setActualStartTime(new Date());
+        companionOrderMapper.updateById(order);
+
+        // 更新 Redis 预约状态为 IN_PROGRESS
+        updateScheduleStatus(order.getCompanionUserId(), order.getAppointmentTime(), CompanionOrderStatus.IN_PROGRESS.getCode());
+
+        log.info("陪玩服务已开始，orderNo={}, companionUserId={}", orderNo, order.getCompanionUserId());
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean completeService(String orderNo) {
+        // 查询订单
+        LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(CompanionOrder::getOrderNo, orderNo);
+        CompanionOrder order = companionOrderMapper.selectOne(wrapper);
+        if (order == null) {
+            throw new ServiceException("订单不存在");
+        }
+        // 校验调用者是否为该陪玩本人
+        if (!order.getCompanionUserId().equals(LoginHelper.getUserId())) {
+            throw new ServiceException("无权操作该订单");
+        }
+        // 仅允许 IN_PROGRESS 状态结束服务
+        if (order.getOrderStatus() != CompanionOrderStatus.IN_PROGRESS) {
+            throw new ServiceException("当前订单状态不允许结束服务");
+        }
+        // 更新订单状态为 COMPLETED，记录实际结束时间
+        order.setOrderStatus(CompanionOrderStatus.COMPLETED);
+        order.setActualEndTime(new Date());
+        companionOrderMapper.updateById(order);
+
+        // 释放 Redis 预约时间段
+        removeSchedule(order.getCompanionUserId(), order.getAppointmentTime());
+
+        // 更新陪玩工作状态为 接单中
+        GameCompanionUser companion = new GameCompanionUser();
+        companion.setId(order.getCompanionUserId());
+        companion.setWorkStatus(WorkStatus.AVAILABLE);
+        companionUserMapper.updateById(companion);
+        log.info("陪玩工作状态已更新为 AVAILABLE，companionUserId={}", order.getCompanionUserId());
+
+        log.info("陪玩服务已结束，orderNo={}, companionUserId={}", orderNo, order.getCompanionUserId());
+        return true;
+    }
+
+    @Override
+    public Boolean requestRefund(String orderNo, String reason) {
+        // TODO: 退款流程待实现
+        // 校验订单归属
+        LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(CompanionOrder::getOrderNo, orderNo);
+        wrapper.eq(CompanionOrder::getUserId, LoginHelper.getUserId());
+        CompanionOrder order = companionOrderMapper.selectOne(wrapper);
+        if (order == null) {
+            throw new ServiceException("订单不存在");
+        }
+        // 仅允许 PAID 状态申请退款
+        if (order.getOrderStatus() != CompanionOrderStatus.PAID) {
+            throw new ServiceException("当前订单状态不允许退款");
+        }
+        throw new ServiceException("退款功能暂未开放，敬请期待");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean rescheduleOrder(String orderNo, String newAppointmentTime) {
+        // 查询订单，校验归属
+        LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(CompanionOrder::getOrderNo, orderNo);
+        wrapper.eq(CompanionOrder::getUserId, LoginHelper.getUserId());
+        CompanionOrder order = companionOrderMapper.selectOne(wrapper);
+        if (order == null) {
+            throw new ServiceException("订单不存在");
+        }
+        // 仅允许 PENDING_PAYMENT 和 PAID 状态修改时间
+        if (order.getOrderStatus() != CompanionOrderStatus.PENDING_PAYMENT && order.getOrderStatus() != CompanionOrderStatus.PAID) {
+            throw new ServiceException("当前订单状态不允许修改服务时间");
+        }
+        // 解析新预约时间
+        Date newTime = parseAppointmentTime(newAppointmentTime);
+
+        // 分布式锁保护：释放旧时间段 + 检查新时间段冲突 + 写入新时间段
+        String lockKey = "companion:schedule:lock:" + order.getCompanionUserId();
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        Date oldTime = order.getAppointmentTime();
+        try {
+            // 1. 释放旧时间段
+            if (oldTime != null) {
+                removeSchedule(order.getCompanionUserId(), oldTime);
+            }
+            // 2. 检查新时间段是否冲突
+            checkTimeSlotConflict(order.getCompanionUserId(), newTime, order.getDuration(), null);
+            // 3. 写入新时间段（orderId 已知）
+            addSchedule(order.getCompanionUserId(), newTime, order.getDuration(), order.getId(), order.getOrderStatus().getCode());
+        } finally {
+            lock.unlock();
+        }
+
+        // 更新 DB 预约时间
+        Date oldAppointmentTime = order.getAppointmentTime();
+        try {
+            order.setAppointmentTime(newTime);
+            companionOrderMapper.updateById(order);
+        } catch (Exception e) {
+            // DB 失败，回滚 Redis：删除新时间段，恢复旧时间段
+            removeSchedule(order.getCompanionUserId(), newTime);
+            if (oldAppointmentTime != null) {
+                addSchedule(order.getCompanionUserId(), oldAppointmentTime, order.getDuration(), order.getId(), order.getOrderStatus().getCode());
+            }
+            throw new ServiceException("修改服务时间失败，请稍后再试");
+        }
+
+        log.info("陪玩订单服务时间已修改，orderNo={}, oldTime={}, newTime={}", orderNo, oldTime, newTime);
+        return true;
+    }
     /** 预约时间 KEY 前缀 */
     private static final String SCHEDULE_KEY_PREFIX = "companion_schedule:";
 
@@ -354,7 +525,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             String existedEnd = existedValue.getStr("end");
             String existedStatus = existedValue.getStr("status");
             // 只检查有效状态（PENDING_PAYMENT 和 PAID）
-            if (!"PENDING_PAYMENT".equals(existedStatus) && !"PAID".equals(existedStatus)) {
+            if (!"PENDING_PAYMENT".equals(existedStatus) && !"PAID".equals(existedStatus) && !"IN_PROGRESS".equals(existedStatus)) {
                 continue;
             }
             // 排除当前订单自身
@@ -372,7 +543,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     /**
      * 写入预约时间到 Redis.
      */
-    private void addSchedule(Long companionUserId, Date startTime, BigDecimal duration, Long orderId) {
+    private void addSchedule(Long companionUserId, Date startTime, BigDecimal duration, Long orderId, String status) {
         Date endTime = DateUtil.offsetSecond(startTime, (int) (duration.doubleValue() * 3600));
         String key = buildScheduleKey(companionUserId, startTime);
         String hKey = DateUtil.format(startTime, "HH:mm:ss");
@@ -381,7 +552,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         JSONObject value = JSONUtil.createObj()
             .set("end", DateUtil.format(endTime, "HH:mm:ss"))
             .set("orderId", orderId)
-            .set("status", "PENDING_PAYMENT");
+            .set("status", status);
 
         RedisUtils.setCacheMapValue(key, hKey, value.toString());
         // 设置 TTL 为当天 23:59:59
@@ -407,6 +578,20 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         if (StrUtil.isNotBlank(cached)) {
             JSONObject value = JSONUtil.parseObj(cached);
             value.set("status", status);
+            RedisUtils.setCacheMapValue(key, hKey, value.toString());
+        }
+    }
+
+    /**
+     * 更新 Redis 预约记录中的 orderId（DB 创建订单后写入）.
+     */
+    private void updateScheduleOrderId(Long companionUserId, Date startTime, Long orderId) {
+        String key = buildScheduleKey(companionUserId, startTime);
+        String hKey = DateUtil.format(startTime, "HH:mm:ss");
+        String cached = RedisUtils.getCacheMapValue(key, hKey);
+        if (StrUtil.isNotBlank(cached)) {
+            JSONObject value = JSONUtil.parseObj(cached);
+            value.set("orderId", orderId);
             RedisUtils.setCacheMapValue(key, hKey, value.toString());
         }
     }

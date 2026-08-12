@@ -5,12 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.business.domain.CompanionOrder;
-import com.business.domain.CompanionOrderStatus;
-import com.business.domain.GameCompanionUser;
-import com.business.domain.PayOrder;
-import com.business.domain.PayOrderStatus;
-import com.business.domain.User;
+import com.business.domain.*;
 import com.business.mapper.CompanionOrderMapper;
 import com.business.mapper.GameCompanionUserMapper;
 import com.business.mapper.UserMapper;
@@ -309,17 +304,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
                 if (order.getCompanionOrderId() != null) {
                     updateScheduleStatus(order.getCompanionOrderId());
                 }
-                // 同步更新陪玩工作状态为 陪玩中
-                if (order.getCompanionOrderId() != null) {
-                    com.business.domain.CompanionOrder co = companionOrderMapper.selectById(order.getCompanionOrderId());
-                    if (co != null && co.getCompanionUserId() != null) {
-                        com.business.domain.GameCompanionUser companion = new com.business.domain.GameCompanionUser();
-                        companion.setId(co.getCompanionUserId());
-                        companion.setWorkStatus(com.business.domain.WorkStatus.PLAYING);
-                        companionUserMapper.updateById(companion);
-                        log.info("陪玩工作状态已更新为 PLAYING，companionUserId={}", co.getCompanionUserId());
-                    }
-                }
+
             }
         } else {
             // 处理重复回调：如果订单已标记为支付成功且交易号一致，则忽略

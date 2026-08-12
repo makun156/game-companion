@@ -45,4 +45,49 @@ public interface IXcxOrderService {
      */
     Boolean cancelOrder(String orderNo);
 
+
+    /**
+     * 开始服务（陪玩端）：PAID → IN_PROGRESS.
+     * <p>
+     * 陪玩点击"开始服务"，记录实际上单时间.
+     * 仅限 PAID 状态的订单，且调用者必须是该陪玩本人.
+     *
+     * @param orderNo 陪玩订单号
+     * @return 是否成功
+     */
+    Boolean startService(String orderNo);
+
+    /**
+     * 结束服务（陪玩端）：IN_PROGRESS → COMPLETED.
+     * <p>
+     * 陪玩点击"结束服务"，记录实际结束时间，释放预约时间段.
+     * 仅限 IN_PROGRESS 状态的订单，且调用者必须是该陪玩本人.
+     *
+     * @param orderNo 陪玩订单号
+     * @return 是否成功
+     */
+    Boolean completeService(String orderNo);
+
+    /**
+     * 申请退款（用户端）：PAID → REFUNDING.
+     * <p>
+     * TODO: 暂未实现，后续接入退款流程.
+     *
+     * @param orderNo 陪玩订单号
+     * @param reason  退款原因
+     * @return 是否成功
+     */
+    Boolean requestRefund(String orderNo, String reason);
+
+    /**
+     * 修改服务时间（用户端）：重新预约时间段.
+     * <p>
+     * 仅限 PENDING_PAYMENT 和 PAID 状态的订单.
+     * 会检查新时间段是否有冲突，释放旧时间段，写入新时间段.
+     *
+     * @param orderNo            陪玩订单号
+     * @param newAppointmentTime 新的预约时间，格式 yyyy-MM-dd HH:mm:ss
+     * @return 是否成功
+     */
+    Boolean rescheduleOrder(String orderNo, String newAppointmentTime);
 }
