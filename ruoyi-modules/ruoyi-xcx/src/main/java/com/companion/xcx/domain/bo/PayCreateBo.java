@@ -4,6 +4,8 @@ import lombok.Data;
 
 /**
  * 小程序支付下单请求参数.
+ * <p>
+ * openid 不需要前端传入，服务端根据当前登录用户 ID 查库获取.
  *
  * @author companion
  */
@@ -14,12 +16,6 @@ public class PayCreateBo {
      * 商户订单号，可选，为空时自动生成
      */
     private String orderNo;
-
-    /**
-     * wx.login()获取的code，用于换取openid；
-     * 当前用户登录时已绑定openid的情况下可不传
-     */
-    private String code;
 
     /**
      * 商品描述，最大127个字符

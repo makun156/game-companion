@@ -93,9 +93,9 @@ public class GameCompanionUser extends BaseEntity {
     private String status;
 
     /**
-     * 工作状态 1接单中 2陪玩中 3暂离4 休息中 5离线
+    /**
+     * 工作状态：AVAILABLE-接单中 PLAYING-陪玩中 AWAY-暂离 RESTING-休息中 OFFLINE-离线
      */
-    private String workStatus;
-
+    private WorkStatus workStatus;
 
 }

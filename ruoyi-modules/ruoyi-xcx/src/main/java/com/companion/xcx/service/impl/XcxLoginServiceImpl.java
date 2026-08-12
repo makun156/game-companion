@@ -24,7 +24,6 @@ import org.dromara.common.core.domain.model.XcxLoginUser;
 import org.dromara.common.core.enums.UserType;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.MapstructUtils;
-import com.business.enums.LoginUserType;
 import org.dromara.common.satoken.utils.LoginHelper;
 import com.companion.xcx.config.WechatMiniappProperties;
 import com.companion.xcx.service.IXcxLoginService;
@@ -49,11 +48,11 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
     /**
      * 微信小程序一键登录
      *
-     * @param xcxCode 小程序code
+     * @param phoneCode 小程序code
      * @return 登录信息
      */
     @Override
-    public XcxLoginVo login(String xcxCode, String wxCode) {
+    public XcxLoginVo login(String phoneCode, String loginCode) {
         // 获取小程序配置
         String appid = wechatMiniappProperties.getAppid();
         String secret = wechatMiniappProperties.getSecret();
@@ -75,7 +74,7 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
 
         // 获取微信用户信息
         HttpResponse getWxLoginInfo = HttpUtil.createPost("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=" + accessToken)
-            .body(JSONUtil.toJsonStr(Map.of("code", xcxCode)))
+            .body(JSONUtil.toJsonStr(Map.of("code", phoneCode)))
             .execute();
         if (!getWxLoginInfo.isOk()) {
             throw new ServiceException("获取小程序用户信息失败，请重试");
@@ -101,7 +100,7 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
 
         // 通过手机号查找或创建用户
         Object obj = loadUserByPhoneNumber(phoneNumber);
-        bindOpenid(obj, wxCode);
+        bindOpenid(obj, loginCode);
 
         // 构建小程序登录用户
         XcxLoginUser loginUser = new XcxLoginUser();
@@ -111,14 +110,14 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
             loginUser.setUsername(companionUser.getName());
             loginUser.setNickname(companionUser.getNickName());
             loginUser.setUserType(UserType.COMPANION_USER.getUserType());
-            userType = LoginUserType.COMPANION.getCode();
+            userType = UserType.COMPANION_USER.getUserType();
         } else {
             UserVo user = (UserVo) obj;
             loginUser.setUserId(user.getId());
             loginUser.setUsername(user.getUserName());
             loginUser.setNickname(user.getNickName());
             loginUser.setUserType(UserType.XCX_USER.getUserType());
-            userType = LoginUserType.USER.getCode();
+            userType = UserType.XCX_USER.getUserType();
         }
         loginUser.setClientKey("xcx");
 
@@ -135,11 +134,11 @@ public class XcxLoginServiceImpl implements IXcxLoginService {
     /**
      * Bind wx.login() openid to the current user so pay orders can reuse it.
      */
-    private void bindOpenid(Object user, String wxCode) {
-        if (StrUtil.isBlank(wxCode)) {
+    private void bindOpenid(Object user, String loginCode) {
+        if (StrUtil.isBlank(loginCode)) {
             return;
         }
-        String openid = getOpenidByCode(wxCode);
+        String openid = getOpenidByCode(loginCode);
         if (user instanceof GameCompanionUser companionUser) {
             GameCompanionUser update = new GameCompanionUser();
             update.setId(companionUser.getId());

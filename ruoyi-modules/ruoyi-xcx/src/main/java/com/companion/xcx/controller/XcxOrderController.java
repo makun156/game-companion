@@ -66,6 +66,16 @@ public class XcxOrderController {
     }
 
     /**
+     * 重新支付
+     *
+     * @param orderNo 陪玩订单号
+     */
+    @Log(title = "小程序重新支付", businessType = BusinessType.INSERT)
+    @PostMapping("/repay/{orderNo}")
+    public R<PayCreateVo> repayOrder(@PathVariable String orderNo) {
+        return R.ok(orderService.repayOrder(orderNo));
+    }
+    /**
      * 取消陪玩订单（仅限 PENDING_PAYMENT 状态）.
      *
      * @param orderNo 订单号

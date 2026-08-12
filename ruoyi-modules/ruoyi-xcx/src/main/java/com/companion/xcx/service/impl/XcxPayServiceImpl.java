@@ -3,22 +3,25 @@ package com.companion.xcx.service.impl;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.business.domain.CompanionOrder;
+import com.business.domain.CompanionOrderStatus;
 import com.business.domain.GameCompanionUser;
 import com.business.domain.PayOrder;
 import com.business.domain.PayOrderStatus;
 import com.business.domain.User;
+import com.business.mapper.CompanionOrderMapper;
 import com.business.mapper.GameCompanionUserMapper;
 import com.business.mapper.UserMapper;
 import com.business.service.IPayOrderService;
-import com.companion.xcx.config.WechatMiniappProperties;
 import com.companion.xcx.config.WechatPayConfig;
 import com.companion.xcx.domain.bo.PayCreateBo;
 import com.companion.xcx.domain.vo.PayCreateVo;
 import com.companion.xcx.service.IXcxPayService;
 import com.wechat.pay.java.core.notification.RequestParam;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.wechat.pay.java.service.payments.jsapi.model.Amount;
 import com.wechat.pay.java.service.payments.jsapi.model.CloseOrderRequest;
 import com.wechat.pay.java.service.payments.jsapi.model.Payer;
@@ -30,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.enums.UserType;
+import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,11 +45,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * 小程序支付服务实现
+ * 小程序支付服务实现.
  *
  * @author companion
  */
@@ -54,19 +57,25 @@ import java.util.regex.Pattern;
 @Service
 public class XcxPayServiceImpl implements IXcxPayService {
 
-    /** 商户订单号正则：6-32位数字、字母或_-|* */
+    /**
+     * 商户订单号正则：6-32位数字、字母或_-|*
+     */
     private static final Pattern ORDER_NO_PATTERN = Pattern.compile("^[0-9a-zA-Z_\\-|*]{6,32}$");
 
-    /** 上海时区，用于格式化过期时间 */
+    /**
+     * 上海时区，用于格式化过期时间
+     */
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
 
-    /** 微信支付成功事件类型 */
+    /**
+     * 微信支付成功事件类型
+     */
     private static final String EVENT_TRANSACTION_SUCCESS = "TRANSACTION.SUCCESS";
 
     private final IPayOrderService payOrderService;
     private final WechatPayConfig wechatPayConfig;
-    private final WechatMiniappProperties wechatMiniappProperties;
     private final UserMapper userMapper;
+    private final CompanionOrderMapper companionOrderMapper;
     private final GameCompanionUserMapper companionUserMapper;
 
     @Override
@@ -85,14 +94,14 @@ public class XcxPayServiceImpl implements IXcxPayService {
         if (bo.getAmount() == null || bo.getAmount() <= 0 || bo.getAmount() > Integer.MAX_VALUE) {
             throw new ServiceException("支付金额必须大于0且不超过21亿元");
         }
-// 校验订单号格式（支持传入自定义订单号，为空时自动生成）
+        // 校验订单号格式（支持传入自定义订单号，为空时自动生成）
         String orderNo = StrUtil.blankToDefault(bo.getOrderNo(), generateOrderNo());
         if (!ORDER_NO_PATTERN.matcher(orderNo).matches()) {
             throw new ServiceException("商户订单号需6-32位数字、字母或_-|*");
         }
 
-        // 获取用户openid（优先通过code换取，其次从数据库获取已绑定的openid）
-        String openid = resolveOpenid(bo.getCode());
+        // 从数据库获取当前登录用户的openid，不需要前端传code
+        String openid = getStoredOpenid();
         Long userId = LoginHelper.getUserId();
         Date expireTime = calcExpireTime(bo.getExpireMinutes());
 
@@ -109,7 +118,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
             order.setTitle(bo.getDescription());
             order.setAmount(bo.getAmount());
             order.setStatus(PayOrderStatus.WAITING);
-order.setExpireTime(expireTime);
+            order.setExpireTime(expireTime);
             payOrderService.createOrder(order);
         } else {
             // 订单已存在，校验归属和状态
@@ -126,7 +135,7 @@ order.setExpireTime(expireTime);
             order.setOpenid(openid);
             order.setTitle(bo.getDescription());
             order.setAmount(bo.getAmount());
-order.setExpireTime(expireTime);
+            order.setExpireTime(expireTime);
             payOrderService.updateOrder(order);
         }
 
@@ -137,7 +146,7 @@ order.setExpireTime(expireTime);
         prepayRequest.setDescription(bo.getDescription());
         prepayRequest.setOutTradeNo(orderNo);
         prepayRequest.setTimeExpire(formatExpireTime(expireTime));
-prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
+        prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
 
         // 设置支付金额（单位：分）
         Amount amount = new Amount();
@@ -267,8 +276,7 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         }
         // 校验交易状态是否为成功
         if (transaction.getTradeState() != Transaction.TradeStateEnum.SUCCESS) {
-            log.warn("微信支付回调交易状态不是SUCCESS，state={}",
-                transaction.getTradeState());
+            log.warn("微信支付回调交易状态不是SUCCESS，state={}", transaction.getTradeState());
             return;
         }
 
@@ -285,10 +293,34 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         // 更新订单为已支付（幂等处理：重复回调不会重复更新）
         boolean updated = payOrderService.markPaid(
             order.getOrderNo(), transaction.getTransactionId(),
-            parsePayTime(transaction.getSuccessTime()));
+            parsePayTime(transaction.getSuccessTime())
+        );
         if (updated) {
-            log.info("支付订单已标记为已支付，orderNo={}, transactionId={}",
-                order.getOrderNo(), transaction.getTransactionId());
+            log.info("支付订单已标记为已支付，orderNo={}, transactionId={}", order.getOrderNo(), transaction.getTransactionId());
+            // 如果有关联的陪玩订单，同步更新状态为已支付
+            if (order.getCompanionOrderId() != null) {
+                CompanionOrder companionOrder = new CompanionOrder();
+                companionOrder.setId(order.getCompanionOrderId());
+                companionOrder.setOrderStatus(CompanionOrderStatus.PAID);
+                companionOrder.setPaidAmount(order.getAmount());
+                companionOrderMapper.updateById(companionOrder);
+                log.info("陪玩订单已同步标记为已支付，companionOrderId={}", order.getCompanionOrderId());
+                // 从 Redis 查询陪玩预约时间并更新状态为已支付
+                if (order.getCompanionOrderId() != null) {
+                    updateScheduleStatus(order.getCompanionOrderId());
+                }
+                // 同步更新陪玩工作状态为 陪玩中
+                if (order.getCompanionOrderId() != null) {
+                    com.business.domain.CompanionOrder co = companionOrderMapper.selectById(order.getCompanionOrderId());
+                    if (co != null && co.getCompanionUserId() != null) {
+                        com.business.domain.GameCompanionUser companion = new com.business.domain.GameCompanionUser();
+                        companion.setId(co.getCompanionUserId());
+                        companion.setWorkStatus(com.business.domain.WorkStatus.PLAYING);
+                        companionUserMapper.updateById(companion);
+                        log.info("陪玩工作状态已更新为 PLAYING，companionUserId={}", co.getCompanionUserId());
+                    }
+                }
+            }
         } else {
             // 处理重复回调：如果订单已标记为支付成功且交易号一致，则忽略
             PayOrder latest = payOrderService.getByOrderNo(order.getOrderNo());
@@ -303,7 +335,6 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
 
     @Override
     public List<PayOrder> list() {
-        // 查询当前登录用户的所有支付订单
         return payOrderService.listByUserId(LoginHelper.getUserId());
     }
 
@@ -346,39 +377,8 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
     }
 
     /**
-     * 通过微信登录code换取openid
-     */
-    private String getOpenidByCode(String code) {
-        HttpResponse response = HttpUtil.createGet("https://api.weixin.qq.com/sns/jscode2session")
-            .form("appid", wechatMiniappProperties.getAppid())
-            .form("secret", wechatMiniappProperties.getSecret())
-            .form("js_code", code)
-            .form("grant_type", "authorization_code")
-            .execute();
-        if (!response.isOk()) {
-            throw new ServiceException("获取微信openid失败");
-        }
-        Map<String, Object> result = JSONUtil.toBean(response.body(), Map.class);
-        String openid = (String) result.get("openid");
-        if (StrUtil.isBlank(openid)) {
-            log.error("微信code2session接口调用失败，response={}", response.body());
-            throw new ServiceException("获取微信openid失败");
-        }
-        return openid;
-    }
-
-    /**
-     * 解析用户openid：优先使用code换取，否则从数据库获取已绑定的openid
-     */
-    private String resolveOpenid(String code) {
-        if (StrUtil.isNotBlank(code)) {
-            return getOpenidByCode(code);
-        }
-        return getStoredOpenid();
-    }
-
-    /**
-     * 从数据库获取当前用户已绑定的openid
+     * 从数据库获取当前用户已绑定的openid.
+     * 根据用户类型（普通用户 / 陪玩用户）分别查询对应表.
      */
     private String getStoredOpenid() {
         Long userId = LoginHelper.getUserId();
@@ -435,6 +435,27 @@ prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
         } catch (Exception e) {
             log.warn("解析微信支付成功时间失败: {}", successTime);
             return new Date();
+        }
+    }
+
+
+    /**
+     * 更新 Redis 预约时间状态为已支付.
+     */
+    private void updateScheduleStatus(Long companionOrderId) {
+        // 查询陪玩订单获取预约信息
+        CompanionOrder companionOrder = companionOrderMapper.selectById(companionOrderId);
+        if (companionOrder == null || companionOrder.getAppointmentTime() == null) {
+            return;
+        }
+        String key = "companion_schedule:" + companionOrder.getCompanionUserId() + ":"
+            + DateUtil.format(companionOrder.getAppointmentTime(), "yyyyMMdd");
+        String hKey = DateUtil.format(companionOrder.getAppointmentTime(), "HH:mm:ss");
+        String cached = RedisUtils.getCacheMapValue(key, hKey);
+        if (StrUtil.isNotBlank(cached)) {
+            JSONObject value = JSONUtil.parseObj(cached);
+            value.set("status", "PAID");
+            RedisUtils.setCacheMapValue(key, hKey, value.toString());
         }
     }
 

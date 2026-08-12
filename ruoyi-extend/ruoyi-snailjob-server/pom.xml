@@ -13,6 +13,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>ruoyi-common-job</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.aizuda</groupId>
             <artifactId>snail-job-server-starter</artifactId>
             <version>${snailjob.version}</version>
@@ -34,6 +39,12 @@
             <groupId>de.codecentric</groupId>
             <artifactId>spring-boot-admin-starter-client</artifactId>
             <version>${spring-boot-admin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.business</groupId>
+            <artifactId>ruoyi-business</artifactId>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
 

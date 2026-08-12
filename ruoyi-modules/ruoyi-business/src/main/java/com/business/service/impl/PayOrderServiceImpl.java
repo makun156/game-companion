@@ -61,7 +61,8 @@ public class PayOrderServiceImpl implements IPayOrderService {
         return baseMapper.update(update,
             Wrappers.lambdaUpdate(PayOrder.class)
                 .eq(PayOrder::getOrderNo, orderNo)
-                .eq(PayOrder::getStatus, PayOrderStatus.WAITING)) > 0;
+                .eq(PayOrder::getStatus, PayOrderStatus.WAITING)
+        ) > 0;
     }
 
     @Override

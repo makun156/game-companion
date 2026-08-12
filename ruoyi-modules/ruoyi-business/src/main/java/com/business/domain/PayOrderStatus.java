@@ -13,22 +13,22 @@ public enum PayOrderStatus {
     /**
      * 待支付
      */
-    WAITING("0"),
+    WAITING("WAITING"),
 
     /**
      * 已支付
      */
-    PAID("1"),
+    PAID("PAID"),
 
     /**
      * 已关闭
      */
-    CLOSED("2"),
+    CLOSED("CLOSED"),
 
     /**
      * 已退款
      */
-    REFUNDED("3");
+    REFUNDED("REFUNDED");
 
     @EnumValue
     private final String code;

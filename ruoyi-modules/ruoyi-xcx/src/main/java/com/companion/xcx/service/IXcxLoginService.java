@@ -13,10 +13,10 @@ public interface IXcxLoginService {
     /**
      * 微信小程序一键登录
      *
-     * @param xcxCode 小程序code
+     * @param phoneCode 手机号code
      * @return 登录信息
      */
-    XcxLoginVo login(String xcxCode, String wxCode);
+    XcxLoginVo login(String phoneCode, String loginCode);
 
     /**
      * 获取当前登录用户信息

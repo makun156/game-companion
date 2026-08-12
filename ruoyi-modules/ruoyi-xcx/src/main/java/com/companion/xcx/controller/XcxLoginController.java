@@ -35,16 +35,17 @@ public class XcxLoginController {
     /**
      * 微信一键登录
      *
-     * @param xcxCode 小程序code
+     * @param phoneCode 手机号code
+     * @param loginCode 登录code
      * @return 登录信息
      */
     @SaIgnore
     @Log(title = "小程序登录", businessType = BusinessType.OTHER)
     @PostMapping("/login")
     public R<XcxLoginVo> login(
-        @NotBlank(message = "小程序code不能为空") @RequestParam String xcxCode,
-        @RequestParam(required = false) String wxCode) {
-        return R.ok(loginService.login(xcxCode, wxCode));
+        @NotBlank(message = "小程序code不能为空") @RequestParam String phoneCode,
+        @RequestParam String loginCode) {
+        return R.ok(loginService.login(phoneCode, loginCode));
     }
 
     /**

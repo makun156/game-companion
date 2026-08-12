@@ -96,7 +96,8 @@ public class XcxPayController {
                 request.getHeader("Wechatpay-Timestamp"),
                 request.getHeader("Wechatpay-Nonce"),
                 request.getHeader("Wechatpay-Signature"),
-                request.getHeader("Wechatpay-Signature-Type"));
+                request.getHeader("Wechatpay-Signature-Type")
+            );
             // 通知微信支付侧处理成功
             response.setStatus(HttpServletResponse.SC_OK);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
