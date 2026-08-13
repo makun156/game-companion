@@ -16,6 +16,9 @@ public class CompanionOrderCreateBo {
 
     /** 陪玩用户ID */
     private Long companionUserId;
+    /** 商户ID（电竞酒店） */
+    private Long merchantId;
+
 
     /** 游戏ID */
     private Long gameId;

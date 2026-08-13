@@ -45,6 +45,9 @@ public class CompanionOrder extends BaseEntity {
      */
     private Long companionUserId;
 
+    /** 商户ID（t_esports_hotel） */
+    private Long merchantId;
+
     /**
      * 游戏ID（t_game）
      */

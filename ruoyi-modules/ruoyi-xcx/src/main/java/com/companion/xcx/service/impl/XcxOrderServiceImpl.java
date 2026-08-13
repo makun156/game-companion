@@ -123,6 +123,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             companionOrder.setOrderNo(buildOrderNo);
             companionOrder.setUserId(LoginHelper.getUserId());
             companionOrder.setCompanionUserId(bo.getCompanionUserId());
+            companionOrder.setMerchantId(bo.getMerchantId());
             companionOrder.setGameId(bo.getGameId());
             companionOrder.setGameLevelId(bo.getGameLevelId());
             companionOrder.setDuration(bo.getDuration());

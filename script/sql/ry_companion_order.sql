@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `t_companion_order` (
     `order_no`           varchar(32)  NOT NULL COMMENT '订单号，如 CO202608091234560001',
     `user_id`            bigint       NOT NULL COMMENT '下单用户ID（t_user）',
     `companion_user_id`  bigint       NOT NULL COMMENT '陪玩用户ID（t_game_companion_user）',
+    `merchant_id`        bigint       DEFAULT NULL COMMENT '商户ID（t_esports_hotel）',
     `game_id`            bigint       DEFAULT NULL COMMENT '游戏ID（t_game）',
     `game_level_id`      bigint       DEFAULT NULL COMMENT '游戏段位ID（t_game_level）',
     `duration`           decimal(5,1) DEFAULT NULL COMMENT '预约时长（小时，如1.5）',
