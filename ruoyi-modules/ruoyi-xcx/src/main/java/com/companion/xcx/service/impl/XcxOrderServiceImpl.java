@@ -219,6 +219,11 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelOrder(String orderNo) {
+        // 分布式锁保护，防止并发：支付回调 / startService 等操作与取消操作冲突
+        String lockKey = "companion:order:lock:" + orderNo;
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        try {
         LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(CompanionOrder::getOrderNo, orderNo);
         wrapper.eq(CompanionOrder::getUserId, LoginHelper.getUserId());
@@ -249,6 +254,9 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         log.info("陪玩工作状态已更新为 AVAILABLE，companionUserId={}", order.getCompanionUserId());
 
         log.info("陪玩订单已取消，orderNo={}", orderNo);
+        } finally {
+            lock.unlock();
+        }
         return true;
     }
 
@@ -256,6 +264,11 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PayCreateVo repayOrder(String orderNo) {
+        // 分布式锁保护，防止并发操作
+        String lockKey = "companion:order:lock:" + orderNo;
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        try {
         // 1. 查询陪玩订单，校验归属
         LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(CompanionOrder::getOrderNo, orderNo);
@@ -269,16 +282,16 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             throw new ServiceException("当前订单状态不允许重新支付");
         }
 
-        // 2.5 重新检查预约时间是否有效（分布式锁保护，防止并发冲突）
-        String lockKey = "companion:schedule:lock:" + companionOrder.getCompanionUserId();
-        RLock lock = redissonClient.getLock(lockKey);
-        lock.lock(10, TimeUnit.SECONDS);
+        // 1.5 重新检查预约时间是否有效（分布式锁保护，防止并发冲突）
+        String scheduleLockKey = "companion:schedule:lock:" + companionOrder.getCompanionUserId();
+        RLock scheduleLock = redissonClient.getLock(scheduleLockKey);
+        scheduleLock.lock(10, TimeUnit.SECONDS);
         try {
             checkTimeSlotConflict(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId());
             // 重新写入预约时间（Redis TTL 可能已过期）
             addSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime(), companionOrder.getDuration(), companionOrder.getId(), CompanionOrderStatus.PENDING_PAYMENT.getCode());
         } finally {
-            lock.unlock();
+            scheduleLock.unlock();
         }
         // 2. 查询关联的支付订单
         LambdaQueryWrapper<PayOrder> payWrapper = Wrappers.lambdaQuery();
@@ -294,7 +307,7 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             throw new ServiceException("订单已退款");
         }
 
-        // 3. 检查订单是否已过期
+        // 3. 检查订单是否已过期（以数据库 expireTime 为准）
         if (payOrder.getExpireTime() != null && payOrder.getExpireTime().before(new Date())) {
             // 过期了，更新支付订单状态为已关闭，提示用户重新下单
             payOrderService.markClosed(payOrder.getOrderNo());
@@ -312,13 +325,15 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
             return vo;
         }
 
-        // 5. 缓存过期，微信侧订单已失效，无法继续支付
-        // 将陪玩订单标记为过期，提示用户重新下单
-        companionOrder.setOrderStatus(CompanionOrderStatus.EXPIRED);
-        companionOrderMapper.updateById(companionOrder);
-        payOrderService.markClosed(payOrder.getOrderNo());
-        removeSchedule(companionOrder.getCompanionUserId(), companionOrder.getAppointmentTime());
-        throw new ServiceException("支付已过期，请重新下单");
+        // 5. 缓存过期，但 DB expireTime 仍有效，重新调用微信预下单
+        // 以数据库 expireTime 为准，而非 Redis 缓存
+        String openid = getStoredOpenid();
+        PayCreateVo vo = rePrepPay(payOrder, openid);
+        log.info("重新支付：缓存过期，重新预下单成功，orderNo={}", orderNo);
+        return vo;
+        } finally {
+            lock.unlock();
+        }
     }
 
 
@@ -334,6 +349,11 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean startService(String orderNo) {
+        // 分布式锁保护，防止并发：cancelOrder 等操作与 startService 冲突
+        String lockKey = "companion:order:lock:" + orderNo;
+        RLock lock = redissonClient.getLock(lockKey);
+        lock.lock(10, TimeUnit.SECONDS);
+        try {
         // 查询订单
         LambdaQueryWrapper<CompanionOrder> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(CompanionOrder::getOrderNo, orderNo);
@@ -357,7 +377,17 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
         // 更新 Redis 预约状态为 IN_PROGRESS
         updateScheduleStatus(order.getCompanionUserId(), order.getAppointmentTime(), CompanionOrderStatus.IN_PROGRESS.getCode());
 
+        // 更新陪玩工作状态为 PLAYING（陪玩中）
+        GameCompanionUser companion = new GameCompanionUser();
+        companion.setId(order.getCompanionUserId());
+        companion.setWorkStatus(WorkStatus.PLAYING);
+        companionUserMapper.updateById(companion);
+        log.info("陪玩工作状态已更新为 PLAYING，companionUserId={}", order.getCompanionUserId());
+
         log.info("陪玩服务已开始，orderNo={}, companionUserId={}", orderNo, order.getCompanionUserId());
+        } finally {
+            lock.unlock();
+        }
         return true;
     }
 
@@ -560,8 +590,41 @@ public class XcxOrderServiceImpl implements IXcxOrderService {
     }
 
     /**
-     * 从 Redis 移除预约时间.
+     * 重新调用微信支付 JSAPI 预下单，并缓存结果.
+     * 当 Redis 缓存过期但数据库 expireTime 仍有效时使用.
      */
+    private PayCreateVo rePrepPay(PayOrder payOrder, String openid) {
+        PrepayRequest prepayRequest = new PrepayRequest();
+        prepayRequest.setAppid(wechatPayConfig.getAppid());
+        prepayRequest.setMchid(wechatPayConfig.getMerchantId());
+        prepayRequest.setDescription(payOrder.getTitle());
+        prepayRequest.setOutTradeNo(payOrder.getOrderNo());
+        prepayRequest.setTimeExpire(formatExpireTime(payOrder.getExpireTime()));
+        prepayRequest.setNotifyUrl(wechatPayConfig.getNotifyUrl());
+
+        Amount amount = new Amount();
+        amount.setTotal(Math.toIntExact(payOrder.getAmount()));
+        prepayRequest.setAmount(amount);
+
+        Payer payer = new Payer();
+        payer.setOpenid(openid);
+        prepayRequest.setPayer(payer);
+
+        PrepayWithRequestPaymentResponse response =
+            wechatPayConfig.getJsapiServiceExtension().prepayWithRequestPayment(prepayRequest);
+
+        PayCreateVo vo = new PayCreateVo();
+        vo.setOrderNo(payOrder.getOrderNo());
+        vo.setAppId(response.getAppId());
+        vo.setTimeStamp(response.getTimeStamp());
+        vo.setNonceStr(response.getNonceStr());
+        vo.setPackageVal(response.getPackageVal());
+        vo.setSignType(response.getSignType());
+        vo.setPaySign(response.getPaySign());
+        RedisUtils.setCacheObject(PREPARE_ORDER_KEY + payOrder.getOrderNo(), JSONUtil.toJsonStr(vo), Duration.ofMinutes(15));
+        return vo;
+    }
+
     private void removeSchedule(Long companionUserId, Date startTime) {
         String key = buildScheduleKey(companionUserId, startTime);
         String hKey = DateUtil.format(startTime, "HH:mm:ss");
