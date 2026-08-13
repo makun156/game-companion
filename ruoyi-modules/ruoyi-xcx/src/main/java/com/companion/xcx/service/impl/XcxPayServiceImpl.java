@@ -1,4 +1,4 @@
-package com.companion.xcx.service.impl;
+﻿package com.companion.xcx.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
@@ -15,19 +15,12 @@ import com.companion.xcx.domain.bo.PayCreateBo;
 import com.companion.xcx.domain.vo.PayCreateVo;
 import com.companion.xcx.service.IXcxPayService;
 import com.wechat.pay.java.core.notification.RequestParam;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.wechat.pay.java.service.payments.jsapi.model.Amount;
-import com.wechat.pay.java.service.payments.jsapi.model.CloseOrderRequest;
-import com.wechat.pay.java.service.payments.jsapi.model.Payer;
-import com.wechat.pay.java.service.payments.jsapi.model.PrepayRequest;
-import com.wechat.pay.java.service.payments.jsapi.model.PrepayWithRequestPaymentResponse;
-import com.wechat.pay.java.service.payments.jsapi.model.QueryOrderByOutTradeNoRequest;
+import com.wechat.pay.java.service.payments.jsapi.model.*;
 import com.wechat.pay.java.service.payments.model.Transaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.enums.UserType;
+import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.redis.utils.RedisUtils;
 import org.dromara.common.satoken.utils.LoginHelper;
 import org.springframework.stereotype.Service;
@@ -244,6 +237,7 @@ public class XcxPayServiceImpl implements IXcxPayService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void handleNotify(String body, String serial, String timestamp, String nonce,
                              String signature, String signType) {
         // 检查微信支付是否已初始化配置
